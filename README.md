@@ -2,13 +2,12 @@
 
 This is our project to make a pebble watch talk to an Arduino.
 
-### TODO ###
+### Really Hot Birds ###
 
-* Get server updating time continuously - Selah
-* Arduino Sensor and writing to server - Dan
-* Visualizing on Pebble watch - Dan/Selah
-* Party mode triggered by watch - Yashus
-* Getting weather from a City - Yashus
+* Game graphics looping with random numbers (DAN)
+* Calibrate steady temp with finger (YASHUS)
+* Server handle multiple requests (SELAH)
+* Party mode when triggered from watch (EVERYONE?)
 
 
 ### MARKDOWN HOW TO ###
