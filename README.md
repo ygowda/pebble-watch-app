@@ -8,6 +8,7 @@ This is our project to make a pebble watch talk to an Arduino.
 * Calibrate steady temp with finger (YASHUS)
 * Server handle multiple requests (SELAH)
 * Party mode when triggered from watch (EVERYONE?)
+* Do we need to make the arduino display Fahrenheit?!
 
 ### Windows ###
 
