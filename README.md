@@ -9,7 +9,7 @@ This is our project to make a pebble watch talk to an Arduino.
 * Server handle multiple requests (SELAH)
 * Party mode when triggered from watch (EVERYONE?)
 
-### Game Play ###
+### Windows ###
 
 1. "Press Play to Start"
 2. Calibration countdown
