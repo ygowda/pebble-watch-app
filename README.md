@@ -5,9 +5,10 @@ This is our project to make a pebble watch talk to an Arduino.
 ### TODO ###
 
 * Get server updating time continuously - Selah
-* Arduino Stuff - Dan
-* Getting weather from a City - Yashus
+* Arduino Sensor and writing to server - Dan
 * Visualizing on Pebble watch - Dan/Selah
+* Party mode triggered by watch - Yashus
+* Getting weather from a City - Yashus
 
 
 ### MARKDOWN HOW TO ###
