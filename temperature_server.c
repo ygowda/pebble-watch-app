@@ -117,41 +117,39 @@ int start_server(int PORT_NUMBER){
   // once you get here, the server is set up and about to start listening
   printf("\nServer configured to listen on port %d\n", PORT_NUMBER);
   fflush(stdout);
- 
 
-  // 4. accept: wait here until we get a connection on that port
-  int sin_size = sizeof(struct sockaddr_in);
-  int fd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
-  printf("Server got a connection from (%s, %d)\n", inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
-  
   // buffer to read data into
   char request[1024];
-  
-  // 5. recv: read incoming message into buffer
-  int bytes_received = recv(fd,request,1024,0);
-  // null-terminate the string
-  request[bytes_received] = '\0';
-  printf("Here comes the message:\n");
-  printf("%s\n", request);
-
-
-  
-  // this is the message that we'll send back
-  /* it actually looks like this:
-    {
-       "name": "cit595"
-    }
-  */
-  
-  
   char reply[100];
-//  sprintf(reply,"{\n\"name\": \"%f\"\n}\n",temp_num);
-  sprintf(reply,"{\n\"name\": \"%f\"\n}\n", 666.0); //DEBUG
-  
-  // 6. send: send the message over the socket
-  // note that the second argument is a char*, and the third is the number of chars
-  send(fd, reply, strlen(reply), 0);
-  //printf("Server sent message: %s\n", reply);
+  int fd;
+ 
+
+
+  while(1==1){
+    // 4. accept: wait here until we get a connection on that port
+    int sin_size = sizeof(struct sockaddr_in);
+    fd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
+    printf("Server got a connection from (%s, %d)\n", 
+      inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
+        
+    // 5. recv: read incoming message into buffer
+    int bytes_received = recv(fd,request,1024,0);
+    // null-terminate the string
+    request[bytes_received] = '\0';
+    printf("Here comes the message:\n");
+    printf("%s\n", request);
+    
+    
+    sprintf(reply,"{\n\"name\": \"%f\"\n}\n",temp_num);
+    
+    printf("Sending reply...\n %s", reply);
+    // 6. send: send the message over the socket
+    // note that the second argument is a char*, and the third is the number of chars
+    send(fd, reply, strlen(reply), 0);
+    //printf("Server sent message: %s\n", reply);
+
+  }
+
 
   // 7. close: close the socket connection
   close(fd);
@@ -176,6 +174,7 @@ int main(int argc, char *argv[]){
   }    
   else{
     printf("WARNING - you are not using your arduino!");
+    temp_num = -999;
   }
 
   int PORT_NUMBER = atoi(argv[1]);
