@@ -10,39 +10,41 @@ static Window *window;
 static TextLayer *hello_layer;
 static char msg[100];
 
+
 void out_sent_handler(DictionaryIterator *sent, void *context) {
     // outgoing message was delivered -- do nothing
+    int x = 1;
 }
-void out_failed_handler(DictionaryIterator *failed,
-AppMessageResult reason, void *context) {
+
+void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
     // outgoing message failed
     text_layer_set_text(hello_layer, "Error out!");
 }
-void in_received_handler(DictionaryIterator *received, void *context)
-{
+
+void in_received_handler(DictionaryIterator *received, void *context){
     // looks for key #0 in the incoming message
-int key = 0;
-Tuple *text_tuple = dict_find(received, key);
-if (text_tuple) {
-if (text_tuple->value) {
-// put it in this global variable
-strcpy(msg, text_tuple->value->cstring);
+    int key = 0;
+    Tuple *text_tuple = dict_find(received, key);
+    if (text_tuple) {
+        if (text_tuple->value) {
+        // put it in this global variable
+            strcpy(msg, text_tuple->value->cstring);
+        }
+        else strcpy(msg, "no value!");
+        text_layer_set_text(hello_layer, msg);
+    }
+    else {
+        text_layer_set_text(hello_layer, "no message!");
+    }
 }
-else strcpy(msg, "no value!");
-text_layer_set_text(hello_layer, msg);
-}
-else {
-text_layer_set_text(hello_layer, "no message!");
-}
-}
+
 void in_dropped_handler(AppMessageResult reason, void *context) {
     // incoming message dropped
     text_layer_set_text(hello_layer, "Error in!");
 }
 
 /* This is called when the select button is clicked */
-void select_click_handler(ClickRecognizerRef recognizer, void *context)
-{
+void select_click_handler(ClickRecognizerRef recognizer, void *context){
     text_layer_set_text(hello_layer, "Selected!");
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
@@ -63,7 +65,7 @@ static void window_load(Window *window) {
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_bounds(window_layer);
     hello_layer = text_layer_create((GRect) { .origin = { 0, 72 }, .size = { bounds.size.w, 20 } });
-    text_layer_set_text(hello_layer, "Hello worlddddddzzz!");
+    text_layer_set_text(hello_layer, "Hello worlddddddzzz!!!");
     text_layer_set_text_alignment(hello_layer, GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(hello_layer));
 }
