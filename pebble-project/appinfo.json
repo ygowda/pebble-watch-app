@@ -1,7 +1,7 @@
 {
-  "uuid": "537ba010-443b-4bb6-8b13-28bb36245cf3",
-  "shortName": "hello-pebble",
-  "longName": "hello-pebble",
+  "uuid": "1efcdca5-3399-4df6-b031-2710825486d9",
+  "shortName": "talk-to-server",
+  "longName": "talk-to-server",
   "companyName": "MakeAwesomeHappen",
   "versionLabel": "1.0",
   "sdkVersion": "3",
@@ -11,7 +11,7 @@
     "watchface": false
   },
   "appKeys": {
-    "dummy": 0
+    "hello_msg": 0
   },
   "resources": {
     "media": []
