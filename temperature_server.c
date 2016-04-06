@@ -11,6 +11,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <time.h>
 
 //NOTE USER SETTING
 //0 for debugging when arduino not available
@@ -23,7 +24,7 @@ float temp_num = 1;
 
 //used by thread to read output from arduino, parse temperature, 
 //and update global temperature variable
-void* get_temp(void* a){
+void* update_temp_from_arduino(void* a){
 
 	char temp_buffer[10];
 	int i = 0;
@@ -77,7 +78,23 @@ void* get_temp(void* a){
 	return 0;	
 }
 
+//alternative to get_temp
+//used for when we have no android but still want to update
+//update global temperature variable
+void* update_temp_randomly(void* a){
+  srand(time(NULL));
+  int rand_bit;
+  while(1==1){
+    usleep(100000);
+    rand_bit = rand() % 10;
+    temp_num += (rand_bit - 4.5)*0.1;
+    //printf("%f\n", temp_num);
+  }
+  return 0;
+}
 
+//start listening for requests from the outside
+//respond to all requests with the current temperature!
 int start_server(int PORT_NUMBER){
 
   // structs to represent the server and client
@@ -166,19 +183,19 @@ int start_server(int PORT_NUMBER){
 
 int main(int argc, char *argv[]){
   // check the number of arguments
-  if (argc != 2)
-    {
-      printf("\nUsage: server [port_number]\n");
-      exit(0);
-    }
+  if (argc != 2){
+    printf("\nUsage: server [port_number]\n");
+    exit(0);
+  }
 
+  pthread_t temp_thread;
   if(use_arduino){
-    pthread_t temp_thread;
-    pthread_create(&temp_thread, NULL, get_temp, NULL);     
-  }    
+    pthread_create(&temp_thread, NULL, update_temp_from_arduino, NULL);     
+  }
   else{
     printf("WARNING - you are not using your arduino!");
-    temp_num = -999;
+    temp_num = -66;
+    pthread_create(&temp_thread, NULL, update_temp_randomly, NULL);         
   }
 
   int PORT_NUMBER = atoi(argv[1]);
