@@ -17,5 +17,14 @@ This is our project to make a pebble watch talk to an Arduino.
 3. Play the game!!! (game loop)
 4. Final score and back to "Press Play to Start"
 
+### SDK Command Line Stuff ###
+
+*TO MAKE PROJECT...
+pebble new-project hello-pebble --simple
+
+*TO RUN... in project directory
+pebble build; pebble install --emulator basalt;
+pebble build; pebble install --cloudpebble;
+
 ### MARKDOWN HOW TO ###
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)

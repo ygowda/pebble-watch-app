@@ -123,6 +123,7 @@ int start_server(int PORT_NUMBER){
   char reply[100];
   int fd;
  
+  ssize_t send_status;
 
 
   while(1==1){
@@ -145,14 +146,17 @@ int start_server(int PORT_NUMBER){
     printf("Sending reply...\n %s", reply);
     // 6. send: send the message over the socket
     // note that the second argument is a char*, and the third is the number of chars
-    send(fd, reply, strlen(reply), 0);
-    //printf("Server sent message: %s\n", reply);
+    send_status = send(fd, reply, strlen(reply), 0);
+
+    printf("Server sent message: %s\n", reply);
+
+    printf("Server send_status: %zd\n", send_status);
+    close(fd);
 
   }
 
 
   // 7. close: close the socket connection
-  close(fd);
   close(sock);
   printf("Server closed connection\n");
 

@@ -4,8 +4,9 @@ function(e) {
 }
 );
 function sendToServer() {
+    console.log("BEGIN sendToServer");
     var req = new XMLHttpRequest();
-    var ipAddress = "127.0.0.1"; // Hard coded IP address
+    var ipAddress = "192.168.1.2"; // Hard coded IP address
     var port = "3001"; // Same port specified as argument to server
     var url = "http://" + ipAddress + ":" + port + "/";
     var method = "GET";
@@ -13,6 +14,7 @@ function sendToServer() {
     
     
     req.onload = function(e) {
+        console.log("BEGIN onload");
         // see what came back
         var msg = "no response";
         var response = JSON.parse(req.responseText);

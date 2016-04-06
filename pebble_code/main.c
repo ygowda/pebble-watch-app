@@ -1,11 +1,5 @@
 #include <pebble.h>
 
-// 3 features
-// 1. Temperature by pre-determined location
-// 2. Higher or lower game (then by digit, with extra time)
-// 3. Flappy Bird game
-// (games shows lights and output on arduino)
-
 static Window *window;
 static TextLayer *hello_layer;
 static char msg[100];
@@ -52,9 +46,9 @@ void select_click_handler(ClickRecognizerRef recognizer, void *context){
     // send the message "hello?" to the phone, using key #0
     Tuplet value = TupletCString(key, "hello?");
     dict_write_tuplet(iter, &value);
-    app_message_outbox_send();
-  
+    app_message_outbox_send();  
 }
+
 /* this registers the appropriate function to the appropriate button */
 void config_provider(void *context) {
     window_single_click_subscribe(BUTTON_ID_SELECT,
@@ -69,9 +63,11 @@ static void window_load(Window *window) {
     text_layer_set_text_alignment(hello_layer, GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(hello_layer));
 }
+
 static void window_unload(Window *window) {
     text_layer_destroy(hello_layer);
 }
+
 static void init(void) {
     window = window_create();
     window_set_window_handlers(window, (WindowHandlers) {
@@ -91,9 +87,11 @@ static void init(void) {
     const bool animated = true;
     window_stack_push(window, animated);
 }
+
 static void deinit(void) {
     window_destroy(window);
 }
+
 int main(void) {
     init();
     app_event_loop();
