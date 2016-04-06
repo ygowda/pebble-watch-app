@@ -88,7 +88,7 @@ void* update_temp_randomly(void* a){
     usleep(100000);
     rand_bit = rand() % 10;
     temp_num += (rand_bit - 4.5)*0.1;
-    //printf("%f\n", temp_num);
+//    printf("%f\n", temp_num);
   }
   return 0;
 }

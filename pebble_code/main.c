@@ -1,8 +1,10 @@
 #include <pebble.h>
+#include <time.h>
 
 static Window *window;
 static TextLayer *hello_layer;
 static char msg[100];
+static int TIMER_INTERVAL_MS = 1000;
 
 
 void out_sent_handler(DictionaryIterator *sent, void *context) {
@@ -39,7 +41,7 @@ void in_dropped_handler(AppMessageResult reason, void *context) {
 
 /* This is called when the select button is clicked */
 void select_click_handler(ClickRecognizerRef recognizer, void *context){
-    text_layer_set_text(hello_layer, "Selected!");
+    text_layer_set_text(hello_layer, "Getting Temp...");
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
     int key = 0;
@@ -51,8 +53,8 @@ void select_click_handler(ClickRecognizerRef recognizer, void *context){
 
 /* this registers the appropriate function to the appropriate button */
 void config_provider(void *context) {
-    window_single_click_subscribe(BUTTON_ID_SELECT,
-    select_click_handler);
+    //subscribe button to button click handler
+    window_single_click_subscribe(BUTTON_ID_SELECT,select_click_handler);
 }
 
 static void window_load(Window *window) {
@@ -65,7 +67,21 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
+    //destroy the text layer
     text_layer_destroy(hello_layer);
+}
+
+static void timer_callback(void *data) {
+
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+    int key = 0;
+    // send the message "hello?" to the phone, using key #0
+    Tuplet value = TupletCString(key, "hello?");
+    dict_write_tuplet(iter, &value);
+    app_message_outbox_send();  
+
+    app_timer_register(TIMER_INTERVAL_MS, timer_callback, NULL);
 }
 
 static void init(void) {
@@ -86,9 +102,12 @@ static void init(void) {
   
     const bool animated = true;
     window_stack_push(window, animated);
+    app_timer_register(TIMER_INTERVAL_MS, timer_callback, NULL);
+
 }
 
 static void deinit(void) {
+    //destroy the window
     window_destroy(window);
 }
 
