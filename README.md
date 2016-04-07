@@ -3,13 +3,17 @@
 This is our project to make a pebble watch talk to an Arduino.
 
 ### Really Hot Birds - TODO ###
-* Game graphics looping with random numbers, then with different phases (DAN)
-* Calibrate steady temp with finger (YASHUS)
-* Party mode when triggered from watch (SELAH)
-* Test multiple updates to watch from server(SELAH)
-* Do we need to make the arduino display Fahrenheit?!
+* Send message from server to arduino (YASHUS & DAN)
+* Cause arduino to make fancy lights (DAN)
+* Combining animation and temperature data (SELAH & DAN)
+* Pebble screen showing min, max and average (Selah)
+* Calibration (Selah)
+* Menu Screen (Dan)
+* Party mode when triggered from watch ???
+
 ##DONE##
 * Server handle multiple requests (SELAH)
+* Game graphics looping with random numbers (DAN)
 
 
 
