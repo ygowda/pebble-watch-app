@@ -20,7 +20,7 @@ int use_arduino = 0;
 
 
 // For temp-getting thread
-float temp_num = 1;
+float temp_num = -999;
 
 //used by thread to read output from arduino, parse temperature, 
 //and update global temperature variable
@@ -194,7 +194,7 @@ int main(int argc, char *argv[]){
   }
   else{
     printf("WARNING - you are not using your arduino!");
-    temp_num = -66;
+    temp_num = 30;
     pthread_create(&temp_thread, NULL, update_temp_randomly, NULL);         
   }
 

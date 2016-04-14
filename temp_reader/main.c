@@ -80,7 +80,7 @@ static void timer_callback(void *data) {
     Tuplet value = TupletCString(key, "hello?");
     dict_write_tuplet(iter, &value);
 
-//COMMENTED FOR TESTING ONLY
+    //COMMENTED FOR TESTING ONLY
    app_message_outbox_send();  
    app_timer_register(TIMER_INTERVAL_MS, timer_callback, NULL);
 }
