@@ -28,19 +28,23 @@ static void player_init(Player *player) {
   player->radius = 10;
 }
 
+static int convert_temp_to_pixel(float temp, float min_temp, float max_temp, int min_pix, int max_pix){
+  float pos_norm = (temp - min_temp)/(max_temp-min_temp); // should be from 0-1
+  int pix_y = max_pix - (pos_norm*(max_pix - min_pix));
+  printf("pos_norm %d pix_y %d\n", (int)pos_norm, pix_y);
+  if(pix_y < min_pix) pix_y = min_pix;
+  if(pix_y > max_pix) pix_y = max_pix;
+  return pix_y;
+  //return max_pix;
+}
+
 static void player_update(Player *player) {  
-  // TEMP
-  //int r = rand() % 10 - 5;
-  int r = (int)curr_temp;
-  
+
+
+  printf("BEGIN player_update, curr_temp: %d \n", (int)curr_temp);
   // update Player position
-  if(r >= 10 && r <= 175) {
-    player->pos.y = r;    
-  } else if(r < 25) {
-      player->pos.y = 25;
-  } else if(r > 175) {
-      player->pos.y = 150;
-  }
+  player->pos.y = convert_temp_to_pixel(curr_temp, 25.0, 35.0, 25, 150);
+  
   
   // UPDATE PATH
   last_ten_y[0] = last_ten_y[1];
