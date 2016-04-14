@@ -8,7 +8,7 @@
 
 static TextLayer *hello_layer;
 static char msg[100];
-static float curr_temp = 83.00;
+static int curr_temp = 83;
 
 static Window *s_game_window;
 static Layer *s_player_layer, *wall_layer;
@@ -16,6 +16,7 @@ static Layer *s_player_layer, *wall_layer;
 static Player thePlayer;
 static int last_ten_y[10] = {56,59,62,65,68,71,74,77,80,83};
 static GRect window_frame;
+
 
 // PLAYER FUNCTIONS
 
@@ -28,10 +29,11 @@ static void player_init(Player *player) {
   player->radius = 10;
 }
 
-static int convert_temp_to_pixel(float temp, float min_temp, float max_temp, int min_pix, int max_pix){
-  float pos_norm = (temp - min_temp)/(max_temp-min_temp); // should be from 0-1
-  int pix_y = max_pix - (pos_norm*(max_pix - min_pix));
-  printf("pos_norm %d pix_y %d\n", (int)pos_norm, pix_y);
+static int convert_temp_to_pixel(int temp, int min_temp, int max_temp, int min_pix, int max_pix){
+  int pos_norm_100 = ((temp - min_temp)*100)/(max_temp-min_temp); // should be from 0-100
+  printf("temp %d pos_norm_100 %d\n", temp, pos_norm_100);
+  int pix_y = max_pix - (pos_norm_100*(max_pix - min_pix)/100);
+  //printf("pos_norm_100 %d pix_y %d\n", (int)pos_norm_100, pix_y);
   if(pix_y < min_pix) pix_y = min_pix;
   if(pix_y > max_pix) pix_y = max_pix;
   return pix_y;
@@ -43,7 +45,7 @@ static void player_update(Player *player) {
 
   printf("BEGIN player_update, curr_temp: %d \n", (int)curr_temp);
   // update Player position
-  player->pos.y = convert_temp_to_pixel(curr_temp, 25.0, 35.0, 25, 150);
+  player->pos.y = convert_temp_to_pixel(curr_temp, 25, 35, 25, 150);
   
   
   // UPDATE PATH
@@ -109,9 +111,9 @@ void in_received_handler(DictionaryIterator *received, void *context){
     Tuple *text_tuple = dict_find(received, key);
     if (text_tuple) {
         if (text_tuple->value) {
-          curr_temp = *(text_tuple->value->data);
-        // put it in this global variable
-            strcpy(msg, text_tuple->value->cstring);
+            //curr_temp = *(text_tuple->value->data); //WHAT IS THIS? ASK DAN.
+            strcpy(msg, text_tuple->value->cstring); //update message
+            curr_temp = atoi(msg); //update global value for sperm location
         }
         else strcpy(msg, "no value!");      
         text_layer_set_text(hello_layer, msg);
@@ -221,3 +223,11 @@ int main(void) {
     app_event_loop();
     deinit();
 }
+
+
+
+
+
+
+
+
