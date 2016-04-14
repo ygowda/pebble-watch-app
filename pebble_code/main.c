@@ -3,7 +3,7 @@
 #include "player.h"
 #include <stdlib.h>
 
-#define FRAME_PAUSE_IN_MS 500
+#define FRAME_PAUSE_IN_MS 100
 
 
 static TextLayer *hello_layer;
@@ -45,7 +45,7 @@ static void player_update(Player *player) {
 
   printf("BEGIN player_update, curr_temp: %d \n", (int)curr_temp);
   // update Player position
-  player->pos.y = convert_temp_to_pixel(curr_temp, 25, 35, 25, 150);
+  player->pos.y = convert_temp_to_pixel(curr_temp, 20, 40, 25, 150);
   
   
   // UPDATE PATH
