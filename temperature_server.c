@@ -18,9 +18,23 @@
 //1 for real use 
 int use_arduino = 0;
 
+const int TEMP_MULTIPLIER = 100; //because we can't use floats on Pebble
 
-// For temp-getting thread
-float temp_num = -999;
+// The temperature state
+float temp_curr = -999;
+float temp_min = 99999;
+float temp_max = -99999;
+float temp_sum = 0;
+float readings_count = 0;
+
+//with the latest temperature reading... update stuff
+void update_temp_stats(float temp){
+  temp_curr = temp;
+  if(temp < temp_min) temp_min = temp;
+  if(temp > temp_max) temp_max = temp;
+  temp_sum += temp;
+  readings_count++;
+}
 
 //used by thread to read output from arduino, parse temperature, 
 //and update global temperature variable
@@ -66,8 +80,8 @@ void* update_temp_from_arduino(void* a){
 				} else if (read_buffer[i] == '\n') {
 					
 					if (strcmp(temp_buffer, "") > 0){
-						temp_num = atof(temp_buffer);
-						printf("Temp: %f \n",temp_num);					
+						printf("Temp: %s \n",temp_buffer);					
+            update_temp_stats(atof(temp_buffer));
 					}
 					strcpy(temp_buffer,""); //reset buffer
 				}
@@ -84,11 +98,12 @@ void* update_temp_from_arduino(void* a){
 void* update_temp_randomly(void* a){
   srand(time(NULL));
   int rand_bit;
+  float temp_new;
   while(1==1){
     usleep(100000);
     rand_bit = rand() % 10;
-    temp_num += (rand_bit - 4.5)*0.1;
-//    printf("%f\n", temp_num);
+    temp_new = temp_curr + (rand_bit - 4.5)*0.1;
+    update_temp_stats(temp_new);
   }
   return 0;
 }
@@ -137,7 +152,7 @@ int start_server(int PORT_NUMBER){
 
   // buffer to read data into
   char request[1024];
-  char reply[100];
+  char reply[600];
   int fd;
  
   ssize_t send_status;
@@ -157,15 +172,19 @@ int start_server(int PORT_NUMBER){
     printf("Here comes the message:\n");
     printf("%s\n", request);
     
+    //compose json reply
+    int loc = 0;
+    loc += sprintf(reply + loc, "{\n" );
+    loc += sprintf(reply + loc, "\"temp_curr_mult\": \"%d\",\n", (int)(temp_curr*TEMP_MULTIPLIER) );
+    loc += sprintf(reply + loc, "\"temp_max_mult\": \"%d\",\n", (int)(temp_max*TEMP_MULTIPLIER) );
+    loc += sprintf(reply + loc, "\"temp_min_mult\": \"%d\",\n", (int)(temp_min*TEMP_MULTIPLIER) );
+    loc += sprintf(reply + loc, "\"temp_avg_mult\": \"%d\"\n", (int)(temp_sum*TEMP_MULTIPLIER/readings_count) );
+    loc += sprintf(reply + loc, "}\n" );
     
-    sprintf(reply,"{\n\"name\": \"%f\"\n}\n",temp_num);
-    
-    printf("Sending reply...\n %s", reply);
+    printf("Sending reply:\n%s", reply);
     // 6. send: send the message over the socket
     // note that the second argument is a char*, and the third is the number of chars
     send_status = send(fd, reply, strlen(reply), 0);
-
-    printf("Server sent message: %s\n", reply);
 
     printf("Server send_status: %zd\n", send_status);
     close(fd);
@@ -194,7 +213,7 @@ int main(int argc, char *argv[]){
   }
   else{
     printf("WARNING - you are not using your arduino!");
-    temp_num = 30;
+    update_temp_stats(30);
     pthread_create(&temp_thread, NULL, update_temp_randomly, NULL);         
   }
 

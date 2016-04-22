@@ -3,19 +3,21 @@
 #include "player.h"
 #include <stdlib.h>
 
-#define FRAME_PAUSE_IN_MS 100
+#define FRAME_PAUSE_IN_MS 750
+#define STATS_WAIT_MS 1500
 
 
-static TextLayer *hello_layer;
-static char msg[100];
-static int curr_temp = 83;
+static TextLayer *hello_layer, *stats_layer;
+static char msg[100], msg2[100];
+static int temp_curr_mult, temp_curr, temp_max, temp_min, temp_avg;
 
-static Window *s_game_window;
+static Window *s_game_window, *s_stats_window;
 static Layer *s_player_layer, *wall_layer;
 
 static Player thePlayer;
 static int last_ten_y[10] = {56,59,62,65,68,71,74,77,80,83};
 static GRect window_frame;
+static int TEMP_MULTIPLIER = 100;
 
 
 // PLAYER FUNCTIONS
@@ -42,10 +44,8 @@ static int convert_temp_to_pixel(int temp, int min_temp, int max_temp, int min_p
 
 static void player_update(Player *player) {  
 
-
-  printf("BEGIN player_update, curr_temp: %d \n", (int)curr_temp);
   // update Player position
-  player->pos.y = convert_temp_to_pixel(curr_temp, 20, 40, 25, 150);
+  player->pos.y = convert_temp_to_pixel(temp_curr_mult, 20*TEMP_MULTIPLIER, 40*TEMP_MULTIPLIER, 25, 150);
   
   
   // UPDATE PATH
@@ -107,20 +107,56 @@ void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, voi
 
 void in_received_handler(DictionaryIterator *received, void *context){
     // looks for key #0 in the incoming message
-    int key = 0;    
-    Tuple *text_tuple = dict_find(received, key);
+    Tuple *text_tuple;
+
+    text_tuple = dict_find(received, 0);
     if (text_tuple) {
         if (text_tuple->value) {
-            //curr_temp = *(text_tuple->value->data); //WHAT IS THIS? ASK DAN.
             strcpy(msg, text_tuple->value->cstring); //update message
-            curr_temp = atoi(msg); //update global value for sperm location
+            temp_curr_mult = atoi(msg);
+            temp_curr = atoi(msg)/TEMP_MULTIPLIER;
         }
         else strcpy(msg, "no value!");      
-        text_layer_set_text(hello_layer, msg);
     }
     else {
         text_layer_set_text(hello_layer, "no message!");
     }
+
+    text_tuple = dict_find(received, 1);
+    if (text_tuple) {
+        if (text_tuple->value) {
+            strcpy(msg2, text_tuple->value->cstring); //update message
+            printf("Setting temp_max\n");
+            temp_max = atoi(msg2)/TEMP_MULTIPLIER;
+        }
+        else strcpy(msg2, "no value!");      
+    }
+    text_tuple = dict_find(received, 2);
+    if (text_tuple) {
+        printf("Setting temp_min\n");
+        if (text_tuple->value) {
+            strcpy(msg2, text_tuple->value->cstring); //update message
+            printf("Setting temp_min\n");
+            temp_min = atoi(msg2)/TEMP_MULTIPLIER;
+        }
+        else strcpy(msg2, "no value!");      
+    }
+    text_tuple = dict_find(received, 3);
+    if (text_tuple) {
+        if (text_tuple->value) {
+            strcpy(msg2, text_tuple->value->cstring); //update message
+            printf("Setting temp_avg\n");
+            temp_avg = atoi(msg2)/TEMP_MULTIPLIER;
+        }
+        else strcpy(msg2, "no value!");      
+    }
+
+    else {
+        text_layer_set_text(hello_layer, "no message2!");
+    }
+
+    text_layer_set_text(hello_layer, msg);
+
 }
 
 void in_dropped_handler(AppMessageResult reason, void *context) {
@@ -134,7 +170,6 @@ static void timer_callback(void *data) {
   player_update(player); 
   
   layer_mark_dirty(s_player_layer);
-  
   
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
@@ -183,6 +218,26 @@ static void game_window_unload(Window *window) {
 }
 
 
+///////STATS FUNCS////////////////
+void remove_stats_window(){
+  window_stack_pop(true);  
+}
+
+
+char stats_text[100]; //put outside function so it is global
+/* This is called when the select button is clicked */
+void select_click_handler(ClickRecognizerRef recognizer, void *context){
+  snprintf(stats_text, 100, "Current Temp: %d \nMax: %d\nMin: %d \nAvg: %d", temp_curr, temp_max, temp_min, temp_avg);
+  text_layer_set_text(stats_layer, stats_text);
+  window_stack_push(s_stats_window, true);
+  app_timer_register(STATS_WAIT_MS, remove_stats_window, NULL);
+}
+
+void config_provider(void *context) {
+    //subscribe button to button click handler
+    window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+}
+
 
 
 static void init(void) {
@@ -211,6 +266,14 @@ static void init(void) {
   srand(time(NULL));
   
   app_timer_register(FRAME_PAUSE_IN_MS, timer_callback, NULL);  
+
+
+  //// set up stats window /////
+  s_stats_window = window_create();
+  stats_layer = text_layer_create(GRect(0, 0, 144, 80));
+  layer_add_child(window_get_root_layer(s_stats_window), text_layer_get_layer(stats_layer));
+  window_set_click_config_provider(s_game_window, config_provider);
+
 }
 
 static void deinit(void) {

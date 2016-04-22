@@ -11,7 +11,10 @@
     "watchface": false
   },
   "appKeys": {
-    "hello_msg": 0
+    "temp_curr_mult": 0,
+    "temp_max_mult": 1,
+    "temp_min_mult": 2,
+    "temp_avg_mult": 3
   },
   "resources": {
     "media": []
