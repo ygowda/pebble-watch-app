@@ -3,15 +3,19 @@
 This is our project to make a pebble watch talk to an Arduino.
 
 ### Really Hot Birds - TODO ###
-* Send message from server to arduino (YASHUS & DAN)
-* Cause arduino to make fancy lights (DAN)
-* Combining animation and temperature data (SELAH & DAN)
-* Pebble screen showing min, max and average (Selah)
-* Calibration (Selah)
-* Menu Screen (Dan)
-* Party mode when triggered from watch ???
+* Calibration, avg +-4 (Selah)
+* Menu Screen, merge with functionality (Dan)
+* Farenheight min temperature is no good (Selah)
+* Limit stats to the last hour
+* Differentiate pebble->server requests 
+* Differentiate server->arduino requests(Farenheit or PartyMode)
+
 
 ##DONE##
+* Pebble screen showing min, max and average (Selah)
+* Combining animation and temperature data (SELAH & DAN)
+* Cause arduino to make fancy lights (YASHUS)
+* Send message from server to arduino (YASHUS)
 * Server handle multiple requests (SELAH)
 * Game graphics looping with random numbers (DAN)
 
