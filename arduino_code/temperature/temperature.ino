@@ -1,4 +1,4 @@
-/***************************************************************************
+ /***************************************************************************
 
                      Copyright 2008 Gravitech
                         All Rights Reserved
@@ -28,8 +28,13 @@
 #define GREEN (5)      /* Green color pin of RGB LED */
 #define BLUE (6)       /* Blue color pin of RGB LED */
 
+
 #define COLD (28)      /* Cold temperature, drive blue LED (23c) */
 #define HOT (29)       /* Hot temperature, drive red LED (27c) */
+
+bool switch_temp = false;
+int recvd_byte =0;
+int random_num =0;
 
 const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
                                  0x6D,0x7D,0x07,0x7F,0x6F, 
@@ -116,6 +121,9 @@ void loop()
     Wire.requestFrom(THERM, 2);
     Temperature_H = Wire.read();
     Temperature_L = Wire.read();
+      String temp_string = "";
+ 
+
     
     /* Calculate temperature */
     Cal_temp (Decimal, Temperature_H, Temperature_L, IsPositive);
@@ -125,7 +133,45 @@ void loop()
     SerialMonitorPrint (Temperature_H, Decimal, IsPositive);
     
     /* Update RGB LED.*/
-    UpdateRGB (Temperature_H);
+      if(Serial.available()>0){
+ //   int temp;
+    recvd_byte = Serial.read();
+
+//    temp = Serial.parseInt();
+    //Serial.println(recvd_byte, DEC);
+    
+    if(recvd_byte != 0){      
+   
+    
+        digitalWrite(RED, LOW);
+        digitalWrite(GREEN, LOW);
+        digitalWrite(BLUE, LOW);
+
+
+
+      digitalWrite(RED, HIGH);
+      delay(500);
+      digitalWrite(RED, LOW);
+      digitalWrite(BLUE, HIGH);
+      delay(500);
+      digitalWrite(BLUE, LOW);
+      digitalWrite(GREEN, HIGH);
+      delay(500);
+      digitalWrite(RED, LOW);
+      digitalWrite(RED, HIGH);
+      delay(500);
+      digitalWrite(GREEN, LOW);
+      digitalWrite(BLUE, HIGH);
+      delay(500);
+      digitalWrite(GREEN, HIGH);
+
+
+    }
+  }
+  else{
+     UpdateRGB (Temperature_H);
+  }
+   
     
     /* Display temperature on the 7-Segment */
     Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive);
@@ -150,6 +196,7 @@ void Cal_temp (int& Decimal, byte& High, byte& Low, bool& sign)
   High = High & B01111111;      /* Remove sign bit */
   Low = Low & B11110000;        /* Remove last 4 bits */
   Low = Low >> 4; 
+  
   Decimal = Low;
   Decimal = Decimal * 625;      /* Each bit = 0.0625 degree C */
   
@@ -157,7 +204,55 @@ void Cal_temp (int& Decimal, byte& High, byte& Low, bool& sign)
   {
     High = High ^ B01111111;    /* Complement all of the bits, except the MSB */
     Decimal = Decimal ^ 0xFF;   /* Complement all of the bits */
-  }  
+  }
+  
+
+  if(switch_temp ==true){
+      String temp_high = (String)High; 
+      String temp_low = (String)Decimal;
+      temp_high.concat(".");
+      temp_high.concat(temp_low);
+
+
+   float final_temp = temp_high.toFloat();
+   
+   final_temp = final_temp*9/5 + 32;
+   String f_temp = String(final_temp);
+
+    String high;
+    String dec;
+    bool dec_reached = false;
+    
+    for(int i =0; i<f_temp.length(); i++){
+      if(dec_reached ==false){
+        
+        if(f_temp.charAt(i)=='.'){
+          dec_reached = true;
+        }
+        if(f_temp.charAt(i)!='.'){
+          high.concat(f_temp.charAt(i));
+        }
+        
+        
+      }
+      else{
+         if(f_temp.charAt(i)!='.'){
+          dec.concat(f_temp.charAt(i));
+        }
+          
+      }
+        
+    }
+
+    High = high.toFloat();
+    //Serial.println(High);
+    Low = dec.toFloat();
+    //Serial.println(Decimal);
+   
+  }
+ 
+  
+  
 }
 
 /***************************************************************************
@@ -181,6 +276,7 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
   {
     Number = High / 100;          /* Get the hundredth digit */
     Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
+  
     High = High % 100;            /* Remove the hundredth digit from the TempHi */
     Digit--;                      /* Subtract 1 digit */    
   }
@@ -192,7 +288,7 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
     High = High % 10;            /* Remove the tenth digit from the TempHi */
     Digit--;                      /* Subtract 1 digit */
   }
-  
+  //so it can really only display 1 digit at a time?
   Number = High;                  /* Display the last digit */
   Number = NumberLookup [Number]; 
   if (Digit > 1)                  /* Display "." if it is not the last digit on 7-SEG */
@@ -201,7 +297,8 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
   }
   Send7SEG (Digit,Number);  
   Digit--;                        /* Subtract 1 digit */
-  
+
+  //decimal starts here
   if (Digit > 0)                  /* Display decimal point if there is more space on 7-SEG */
   {
     Number = Decimal / 1000;
@@ -211,7 +308,14 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
 
   if (Digit > 0)                 /* Display "c" if there is more space on 7-SEG */
   {
-    Send7SEG (Digit,0x58);
+    //0x71 for farenheight and 0x58 for celsius
+    if(switch_temp==true){
+      Send7SEG (Digit,0x71);
+    }
+    else{
+      Send7SEG (Digit,0x58);
+    }
+    
     Digit--;
   }
   
@@ -282,6 +386,3 @@ void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive)
     Serial.print(" degree C");
     Serial.print("\n\n");
 }
-    
-
-

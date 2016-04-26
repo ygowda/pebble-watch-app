@@ -16,7 +16,7 @@
 //NOTE USER SETTING
 //0 for debugging when arduino not available
 //1 for real use 
-int use_arduino = 0;
+int use_arduino = 1;
 
 const int TEMP_MULTIPLIER = 100; //because we can't use floats on Pebble
 
@@ -26,7 +26,8 @@ float temp_min = 99999;
 float temp_max = -99999;
 float temp_sum = 0;
 float readings_count = 0;
-
+int failed = 0;
+int oops_count = 0;
 //with the latest temperature reading... update stuff
 void update_temp_stats(float temp){
   temp_curr = temp;
@@ -40,56 +41,81 @@ void update_temp_stats(float temp){
 //and update global temperature variable
 void* update_temp_from_arduino(void* a){
 
-	char temp_buffer[10];
-	int i = 0;
-	int temp_length = 0;
-	int continuing = 1;
-	printf("Hello, attempting to read from Arduino!\n");
+  char temp_buffer[10];
+  int i = 0;
+  int temp_length = 0;
+  int continuing = 1;
+  printf("Hello, attempting to read from Arduino!\n");
+  
+ 
 
-	/////// OPEN the arduino device as a file
-	int fd = open("/dev/ttyACM0", O_RDWR);
-	if(fd==-1){
-		printf("OOPS!\n");
-		exit(1);
-	}
+ 
 
-	////// CONFIG options from instructions PDF
-	struct termios options;
-	// struct to hold options
-	tcgetattr(fd, &options);
-	// associate with this fd
-	cfsetispeed(&options, 9600); // set input baud rate
-	cfsetospeed(&options, 9600); // set output baud rate
-	tcsetattr(fd, TCSANOW, &options); // set options
+  //LOOP that is continuiously reading from arduino and writing to the screen
+  strcpy(temp_buffer,"");
+  char read_buffer[200];
+  while(continuing){
 
-	//LOOP that is continuiously reading from arduino and writing to the screen
-	strcpy(temp_buffer,"");
-	char read_buffer[200];
-	while(continuing){
-		int bytes_read = read(fd, read_buffer, 200);
-		if(bytes_read > 0){
-			read_buffer[bytes_read] = '\0';
-			
-			for (i = 0; i < bytes_read; i++){
-				if ((read_buffer[i] >= '0' && read_buffer[i] <= '9') 
-				|| (read_buffer[i] == '.')) {
-					temp_length = strlen(temp_buffer);
-					temp_buffer[temp_length] = read_buffer[i];
-					temp_buffer[temp_length + 1] = '\0';
-					
-				} else if (read_buffer[i] == '\n') {
-					
-					if (strcmp(temp_buffer, "") > 0){
-						printf("Temp: %s \n",temp_buffer);					
+  /////// OPEN the arduino device as a file
+
+    int fd = open("/dev/cu.usbmodem1421", O_RDWR);
+    if(fd==-1){
+      if(oops_count==0){
+        printf("OOPS!\n");
+      }
+      oops_count++;
+      failed = 1;
+      //exit(1);
+    }
+    else{
+      oops_count =0;
+    }
+
+
+
+     ////// CONFIG options from instructions PDF
+  struct termios options;
+  // struct to hold options
+  tcgetattr(fd, &options);
+  // associate with this fd
+  cfsetispeed(&options, 9600); // set input baud rate
+  cfsetospeed(&options, 9600); // set output baud rate
+  tcsetattr(fd, TCSANOW, &options); // set options
+
+
+
+
+    int bytes_read = read(fd, read_buffer, 200);
+    char* msg = "party mode";
+    //so this has to be written to the device file now arduino has to read it
+
+
+    //int byte_written = write(fd, msg, strlen(msg));
+
+
+    if(bytes_read > 0){
+      read_buffer[bytes_read] = '\0';
+      
+      for (i = 0; i < bytes_read; i++){
+        if ((read_buffer[i] >= '0' && read_buffer[i] <= '9') 
+        || (read_buffer[i] == '.')) {
+          temp_length = strlen(temp_buffer);
+          temp_buffer[temp_length] = read_buffer[i];
+          temp_buffer[temp_length + 1] = '\0';
+          
+        } else if (read_buffer[i] == '\n') {
+          
+          if (strcmp(temp_buffer, "") > 0){
+            printf("Temp: %s \n",temp_buffer);          
             update_temp_stats(atof(temp_buffer));
-					}
-					strcpy(temp_buffer,""); //reset buffer
-				}
-			}
-			//printf("%s", read_buffer);						
-		}		
-	}
-	return 0;	
+          }
+          strcpy(temp_buffer,""); //reset buffer
+        }
+      }
+      //printf("%s", read_buffer);            
+    }   
+  }
+  return 0; 
 }
 
 //alternative to get_temp
@@ -119,12 +145,12 @@ int start_server(int PORT_NUMBER){
 
   // 1. socket: creates a socket descriptor that you later use to make other system calls
   if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-  	perror("Socket");
-  	exit(1);
+    perror("Socket");
+    exit(1);
   }
   int temp;
   if (setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&temp,sizeof(int)) == -1) {
-  	perror("Setsockopt");
+    perror("Setsockopt");
     exit(1);
   }
 
@@ -172,7 +198,15 @@ int start_server(int PORT_NUMBER){
     printf("Here comes the message:\n");
     printf("%s\n", request);
     
-    //compose json reply
+    // if(failed == 1){
+    //   printf("an error occurred");
+    //   int loc = 0;
+    //   loc += sprintf(reply + loc, "Arduino_was_disconnected");
+    //   failed = 0;
+    // }
+    // else{
+    printf("sending the temp now");
+      //compose json reply
     int loc = 0;
     loc += sprintf(reply + loc, "{\n" );
     loc += sprintf(reply + loc, "\"temp_curr_mult\": \"%d\",\n", (int)(temp_curr*TEMP_MULTIPLIER) );
@@ -184,7 +218,12 @@ int start_server(int PORT_NUMBER){
     printf("Sending reply:\n%s", reply);
     // 6. send: send the message over the socket
     // note that the second argument is a char*, and the third is the number of chars
+
+//}
     send_status = send(fd, reply, strlen(reply), 0);
+
+    
+    //printf(reply);
 
     printf("Server send_status: %zd\n", send_status);
     close(fd);
@@ -220,7 +259,4 @@ int main(int argc, char *argv[]){
   int PORT_NUMBER = atoi(argv[1]);
   start_server(PORT_NUMBER);
 }
-
-
-
 
