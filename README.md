@@ -9,7 +9,6 @@ This is our project to make a pebble watch talk to an Arduino.
 * Differentiate pebble->server requests, party mode triggered by select button (Selah)
 * Differentiate server->arduino requests(Farenheit or PartyMode) (YASHUS) (SELAH)
 * Check if the server does not get connection from pebble code (ex: wrong ip address) then display error message next time (DAN)
-* display error message on the watch when the arduino gets disconnected (server already shows message).
 * Stand by mode. Arduino screen should not display reading and neither should watch but temp should still be tracked. (YASHUS), (DAN).
 *Limit stats to last hour (DAN)
 
@@ -22,6 +21,9 @@ This is our project to make a pebble watch talk to an Arduino.
 * Send message from server to arduino (YASHUS)
 * Server handle multiple requests (SELAH)
 * Game graphics looping with random numbers (DAN)
+* display error message on the watch when the arduino gets disconnected (server already shows message).
+
+
 
 
 
