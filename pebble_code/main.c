@@ -8,7 +8,7 @@
 
 
 static TextLayer *hello_layer, *stats_layer;
-static char msg[100], msg2[100];
+static char msg[100];
 static int temp_curr_mult, temp_curr, temp_max, temp_min, temp_avg;
 
 static Window *s_game_window, *s_stats_window;
@@ -32,14 +32,13 @@ static void player_init(Player *player) {
 }
 
 static int convert_temp_to_pixel(int temp, int min_temp, int max_temp, int min_pix, int max_pix){
-  int pos_norm_100 = ((temp - min_temp)*100)/(max_temp-min_temp); // should be from 0-100
-  printf("temp %d pos_norm_100 %d\n", temp, pos_norm_100);
-  int pix_y = max_pix - (pos_norm_100*(max_pix - min_pix)/100);
+  printf("BEGIN convert_temp_to_pixel %d\n", temp);
+  int pos_norm_100 = ((temp - min_temp)*TEMP_MULTIPLIER)/(max_temp-min_temp); // should be from 0-100
+  int pix_y = max_pix - (pos_norm_100*(max_pix - min_pix)/TEMP_MULTIPLIER);
   //printf("pos_norm_100 %d pix_y %d\n", (int)pos_norm_100, pix_y);
   if(pix_y < min_pix) pix_y = min_pix;
   if(pix_y > max_pix) pix_y = max_pix;
   return pix_y;
-  //return max_pix;
 }
 
 static void player_update(Player *player) {  
@@ -104,60 +103,61 @@ void out_sent_handler(DictionaryIterator *sent, void *context) {
 
 void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
     // outgoing message failed
-    text_layer_set_text(hello_layer, "Error sending message to server!");
+    text_layer_set_text(hello_layer, "Error out!");
 }
 
 void in_received_handler(DictionaryIterator *received, void *context){
     // looks for key #0 in the incoming message
     Tuple *text_tuple;
 
+    //default values if not successfully gotten
+    temp_curr_mult = -999;
+    temp_curr = -999;
+    temp_min = -999;
+    temp_max = -999;
+    temp_avg = -999;
+
+
+    //get current temperature from server reply
     text_tuple = dict_find(received, 0);
     if (text_tuple) {
         if (text_tuple->value) {
-            strcpy(msg, text_tuple->value->cstring); //update message
-            temp_curr_mult = atoi(msg);
-            temp_curr = atoi(msg)/TEMP_MULTIPLIER;
+            temp_curr_mult = atoi(text_tuple->value->cstring);
+            temp_curr = atoi(text_tuple->value->cstring)/TEMP_MULTIPLIER;
         }
-        else strcpy(msg, "no value!");      
-    }
-    else {
-        text_layer_set_text(hello_layer, "no message!");
     }
 
     text_tuple = dict_find(received, 1);
     if (text_tuple) {
         if (text_tuple->value) {
-            strcpy(msg2, text_tuple->value->cstring); //update message
-            printf("Setting temp_max\n");
-            temp_max = atoi(msg2)/TEMP_MULTIPLIER;
+            temp_max = atoi(text_tuple->value->cstring)/TEMP_MULTIPLIER;
         }
-        else strcpy(msg2, "no value!");      
     }
+
     text_tuple = dict_find(received, 2);
     if (text_tuple) {
-        printf("Setting temp_min\n");
         if (text_tuple->value) {
-            strcpy(msg2, text_tuple->value->cstring); //update message
-            printf("Setting temp_min\n");
-            temp_min = atoi(msg2)/TEMP_MULTIPLIER;
+            temp_min = atoi(text_tuple->value->cstring)/TEMP_MULTIPLIER;
         }
-        else strcpy(msg2, "no value!");      
     }
+
     text_tuple = dict_find(received, 3);
     if (text_tuple) {
         if (text_tuple->value) {
-            strcpy(msg2, text_tuple->value->cstring); //update message
-            printf("Setting temp_avg\n");
-            temp_avg = atoi(msg2)/TEMP_MULTIPLIER;
+            temp_avg = atoi(text_tuple->value->cstring)/TEMP_MULTIPLIER;
         }
-        else strcpy(msg2, "no value!");      
     }
 
-    else {
-        text_layer_set_text(hello_layer, "no message2!");
+    if(temp_curr != -999) {
+      snprintf(msg, 30, "Temp curr = %d", temp_curr);
+    }
+    else{
+      snprintf(msg, 30, "No data!");
     }
 
     text_layer_set_text(hello_layer, msg);
+
+    printf("END in_received_handler %d %d %d %d %d\n", temp_curr, temp_curr_mult, temp_min, temp_max, temp_avg);
 }
 
 void in_dropped_handler(AppMessageResult reason, void *context) {
@@ -193,7 +193,7 @@ static void game_window_load(Window *window) {
   // 1. Create layer
   wall_layer = layer_create(frame);
   s_player_layer = layer_create(frame);
-  hello_layer = text_layer_create((GRect) { .origin = { 0, 72 }, .size = { frame.size.w, 20 } });
+  hello_layer = text_layer_create((GRect) { .origin = { 0, frame.size.h - 20}, .size = { frame.size.w, 20 } });
   
   text_layer_set_text_alignment(hello_layer, GTextAlignmentCenter);
   
