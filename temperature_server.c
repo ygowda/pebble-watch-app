@@ -16,7 +16,9 @@
 //NOTE USER SETTING
 //0 for debugging when arduino not available
 //1 for real use 
-int use_arduino = 1;
+int use_arduino = 0;
+const char* PATH_ARDUINO = "/dev/ttyACM0";
+//const char* PATH_ARDUINO = "/dev/cu.usbmodem1421";
 
 const int TEMP_MULTIPLIER = 100; //because we can't use floats on Pebble
 
@@ -58,10 +60,10 @@ void* update_temp_from_arduino(void* a){
 
   /////// OPEN the arduino device as a file
 
-    int fd = open("/dev/cu.usbmodem1421", O_RDWR);
+    int fd = open(PATH_ARDUINO, O_RDWR);
     if(fd==-1){
       if(oops_count==0){
-        printf("OOPS!\n");
+        printf("OOPS! Could not successfully open the Arduino connection.\n");
       }
       oops_count++;
       failed = 1;

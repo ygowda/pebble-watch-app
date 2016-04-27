@@ -47,7 +47,6 @@ static void player_update(Player *player) {
   // update Player position
   player->pos.y = convert_temp_to_pixel(temp_curr_mult, 20*TEMP_MULTIPLIER, 40*TEMP_MULTIPLIER, 25, 150);
   
-  
   // UPDATE PATH
   last_ten_y[0] = last_ten_y[1];
   last_ten_y[1] = last_ten_y[2];
@@ -156,7 +155,6 @@ void in_received_handler(DictionaryIterator *received, void *context){
     }
 
     text_layer_set_text(hello_layer, msg);
-
 }
 
 void in_dropped_handler(AppMessageResult reason, void *context) {
@@ -184,7 +182,6 @@ static void timer_callback(void *data) {
    app_timer_register(FRAME_PAUSE_IN_MS, timer_callback, NULL);
 }
 
-
 static void game_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect frame = layer_get_bounds(window_layer);
@@ -207,8 +204,7 @@ static void game_window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(hello_layer));
   
   // 4. Init Values
-  player_init(&thePlayer);
-  
+  player_init(&thePlayer); 
 }
 
 static void game_window_unload(Window *window) {
@@ -273,7 +269,6 @@ static void init(void) {
   stats_layer = text_layer_create(GRect(0, 0, 144, 80));
   layer_add_child(window_get_root_layer(s_stats_window), text_layer_get_layer(stats_layer));
   window_set_click_config_provider(s_game_window, config_provider);
-
 }
 
 static void deinit(void) {
