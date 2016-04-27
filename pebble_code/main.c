@@ -2,10 +2,13 @@
 #include <time.h>
 #include "player.h"
 #include <stdlib.h>
+#include <time.h>
 
 #define FRAME_PAUSE_IN_MS 750
 #define STATS_WAIT_MS 1500
 
+const time_t DATA_TIMEOUT_IN_S = 2;
+time_t last_send_time;
 
 static TextLayer *hello_layer, *stats_layer;
 static char msg[100];
@@ -96,6 +99,38 @@ static void wall_layer_update_callback(Layer *me, GContext *ctx) {
 
 // TEMP FUNCTIONS
 
+static void timer_callback(void *data); //just declairing it
+
+static void timer_callback_data_timeout(void *data){
+  printf("DEBUG BEGIN timer_callback_data_timeout\n");
+  if(time(NULL) - last_send_time >= DATA_TIMEOUT_IN_S){
+    text_layer_set_text(hello_layer, "No Data!");
+    app_timer_register(FRAME_PAUSE_IN_MS, timer_callback, NULL);
+  }
+}
+
+static void timer_callback(void *data) {
+  printf("DEBUG BEGIN timer_callback\n");
+
+  Player *player = &thePlayer;
+  player_update(player); 
+  
+  layer_mark_dirty(s_player_layer);
+  
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+    int key = 0;
+    // send the message "hello?" to the phone, using key #0
+    Tuplet value = TupletCString(key, "hello?");
+    dict_write_tuplet(iter, &value);
+
+    //COMMENTED FOR TESTING ONLY
+    app_message_outbox_send();  
+    last_send_time = time(NULL);
+    app_timer_register(DATA_TIMEOUT_IN_S * 1000, timer_callback_data_timeout, NULL);
+}
+
+
 void out_sent_handler(DictionaryIterator *sent, void *context) {
     // outgoing message was delivered -- do nothing
     //int x = 1;
@@ -157,33 +192,17 @@ void in_received_handler(DictionaryIterator *received, void *context){
 
     text_layer_set_text(hello_layer, msg);
 
-    printf("END in_received_handler %d %d %d %d %d\n", temp_curr, temp_curr_mult, temp_min, temp_max, temp_avg);
+    //BEGIN NEXT ITERATION
+    app_timer_register(FRAME_PAUSE_IN_MS, timer_callback, NULL);
+
 }
 
 void in_dropped_handler(AppMessageResult reason, void *context) {
     // incoming message dropped
     text_layer_set_text(hello_layer, "Error in!");
+    printf("in_dropped_handler\n");
 }
 
-static void timer_callback(void *data) {
-
-  Player *player = &thePlayer;
-  player_update(player); 
-  
-  layer_mark_dirty(s_player_layer);
-  
-    DictionaryIterator *iter;
-    app_message_outbox_begin(&iter);
-    int key = 0;
-    // send the message "hello?" to the phone, using key #0
-    Tuplet value = TupletCString(key, "hello?");
-    dict_write_tuplet(iter, &value);
-
-    //COMMENTED FOR TESTING ONLY
-    app_message_outbox_send();  
-   
-   app_timer_register(FRAME_PAUSE_IN_MS, timer_callback, NULL);
-}
 
 static void game_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
