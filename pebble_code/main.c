@@ -45,7 +45,10 @@ static int convert_temp_to_pixel(int temp, int min_temp, int max_temp, int min_p
 static void player_update(Player *player) {  
 
   // update Player position
-  player->pos.y = convert_temp_to_pixel(temp_curr_mult, 20*TEMP_MULTIPLIER, 40*TEMP_MULTIPLIER, 25, 150);
+  int max_display_temp = temp_avg + 10;
+  int min_display_temp = temp_avg - 10;
+
+  player->pos.y = convert_temp_to_pixel(temp_curr_mult, min_display_temp*TEMP_MULTIPLIER, max_display_temp*TEMP_MULTIPLIER, 25, 150);
   
   // UPDATE PATH
   last_ten_y[0] = last_ten_y[1];
@@ -101,7 +104,7 @@ void out_sent_handler(DictionaryIterator *sent, void *context) {
 
 void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
     // outgoing message failed
-    text_layer_set_text(hello_layer, "Error out!");
+    text_layer_set_text(hello_layer, "Error sending message to server!");
 }
 
 void in_received_handler(DictionaryIterator *received, void *context){
