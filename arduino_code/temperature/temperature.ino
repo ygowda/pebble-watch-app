@@ -32,11 +32,7 @@
 #define COLD (28)      /* Cold temperature, drive blue LED (23c) */
 #define HOT (29)       /* Hot temperature, drive red LED (27c) */
 
-<<<<<<< Updated upstream
-bool switch_temp = true;
-=======
 bool switch_temp = true; //Fahrenheit vs Celcius.... true = fahrenheit
->>>>>>> Stashed changes
 int recvd_byte =0;
 int random_num =0;
 
