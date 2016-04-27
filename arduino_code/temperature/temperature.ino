@@ -32,7 +32,7 @@
 #define COLD (28)      /* Cold temperature, drive blue LED (23c) */
 #define HOT (29)       /* Hot temperature, drive red LED (27c) */
 
-bool switch_temp = false;
+bool switch_temp = true;
 int recvd_byte =0;
 int random_num =0;
 

@@ -86,11 +86,12 @@ void* update_temp_from_arduino(void* a){
 
 
     int bytes_read = read(fd, read_buffer, 200);
-    char* msg = "party mode";
+    char* msg = "p";
+    char* msg1 = "ct";
     //so this has to be written to the device file now arduino has to read it
 
 
-    //int byte_written = write(fd, msg, strlen(msg));
+    int byte_written = write(fd, msg1, strlen(msg1));
 
 
     if(bytes_read > 0){
@@ -201,12 +202,28 @@ int start_server(int PORT_NUMBER){
     // if(failed == 1){
     //   printf("an error occurred");
     //   int loc = 0;
-    //   loc += sprintf(reply + loc, "Arduino_was_disconnected");
+    //   loc += sprintf(reply + loc, "{\n" );
+    //   loc += sprintf(reply + loc, "\"Arduino_was_disconnected\": 1");
+    //   loc += sprintf(reply + loc, "}\n" );
     //   failed = 0;
     // }
-    // else{
+   
     printf("sending the temp now");
       //compose json reply
+    if(failed ==1){  
+    int loc = 0;
+    loc += sprintf(reply + loc, "{\n" );
+    loc += sprintf(reply + loc, "\"temp_curr_mult\": \"%s\",\n", "the arduino was disconnected" );
+    loc += sprintf(reply + loc, "\"temp_max_mult\": \"%d\",\n", (int)(temp_max*TEMP_MULTIPLIER) );
+    loc += sprintf(reply + loc, "\"temp_min_mult\": \"%d\",\n", (int)(temp_min*TEMP_MULTIPLIER) );
+    loc += sprintf(reply + loc, "\"temp_avg_mult\": \"%d\"\n", (int)(temp_sum*TEMP_MULTIPLIER/readings_count) );
+    loc += sprintf(reply + loc, "}\n" );
+    failed = 0;
+
+    }
+
+    else{
+
     int loc = 0;
     loc += sprintf(reply + loc, "{\n" );
     loc += sprintf(reply + loc, "\"temp_curr_mult\": \"%d\",\n", (int)(temp_curr*TEMP_MULTIPLIER) );
@@ -214,12 +231,13 @@ int start_server(int PORT_NUMBER){
     loc += sprintf(reply + loc, "\"temp_min_mult\": \"%d\",\n", (int)(temp_min*TEMP_MULTIPLIER) );
     loc += sprintf(reply + loc, "\"temp_avg_mult\": \"%d\"\n", (int)(temp_sum*TEMP_MULTIPLIER/readings_count) );
     loc += sprintf(reply + loc, "}\n" );
+    }
     
     printf("Sending reply:\n%s", reply);
     // 6. send: send the message over the socket
     // note that the second argument is a char*, and the third is the number of chars
 
-//}
+
     send_status = send(fd, reply, strlen(reply), 0);
 
     
