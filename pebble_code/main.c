@@ -260,6 +260,7 @@ void select_long_click_handler(ClickRecognizerRef recognizer, void *context){
   //app_timer_register(STATS_WAIT_MS, remove_stats_window, NULL);
   
   lights_on = 1;
+  farenheit_on =0;
 }
 
 void multi_select_click_handler(ClickRecognizerRef recognizer, void *context){
@@ -268,6 +269,7 @@ void multi_select_click_handler(ClickRecognizerRef recognizer, void *context){
   text_layer_set_text(stats_layer, stats_text);
   window_stack_push(s_stats_window, true);
     farenheit_on =1;
+    lights_on =0;
 //     }
 //   else{
 //     farenheit_on =1;
@@ -339,5 +341,6 @@ int main(void) {
     app_event_loop();
     deinit();
 }
+
 
 
