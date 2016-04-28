@@ -8,15 +8,18 @@ function sendToServer(e) {
   console.log("   payload: " + e.payload[0]);
   console.log("   type: " + e.payload.constructor.name);
     var req = new XMLHttpRequest();
-    var ipAddress = "165.123.154.149"; // Hard coded IP address of server
+    var ipAddress = "158.130.210.118"; // Hard coded IP address of server
     var port = "3001"; // Same port specified as argument to server
-    //var url = "http://" + ipAddress + ":" + port + "/";
+ //   var url = "http://" + ipAddress + ":" + port + "/";
     var url = "";
     if(e.payload[0]=="1"){            
       url = "http://" + ipAddress + ":" + port + "?q=1"; //onF     lights on 
     } else if(e.payload[0]=="2"){     
       url = "http://" + ipAddress + ":" + port + "?q=2"; //onC    Farenheit on
     }
+//  else{
+//      url = "http://" + ipAddress + ":" + port + "/";
+//  }
     
 //     if(e.payload[1] =="1"){
 //        url = url + "1"; //f on 
