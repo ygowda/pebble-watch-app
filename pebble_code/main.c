@@ -1,6 +1,6 @@
 #include <pebble.h>
 #include <time.h>
-#include "player.h"
+#include <player.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -22,6 +22,8 @@ static int last_ten_y[10] = {56,59,62,65,68,71,74,77,80,83};
 static GRect window_frame;
 static int TEMP_MULTIPLIER = 100;
 
+static int lights_on = 0;
+static int farenheit_on = 0;
 
 // PLAYER FUNCTIONS
 
@@ -117,17 +119,33 @@ static void timer_callback(void *data) {
   
   layer_mark_dirty(s_player_layer);
   
-    DictionaryIterator *iter;
-    app_message_outbox_begin(&iter);
-    int key = 0;
-    // send the message "hello?" to the phone, using key #0
-    Tuplet value = TupletCString(key, "hello?");
-    dict_write_tuplet(iter, &value);
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+  int key = 0;
+	Tuplet value1= TupletCString(key, "1"); // on
+  dict_write_tuplet(iter, &value1);
 
-    //COMMENTED FOR TESTING ONLY
-    app_message_outbox_send();  
-    last_send_time = time(NULL);
-    app_timer_register(DATA_TIMEOUT_IN_S * 1000, timer_callback_data_timeout, NULL);
+	// send the message "hello?" to the phone, using key #0
+	if(lights_on == 1 && farenheit_on == 1) {
+		Tuplet value1= TupletCString(key, "1"); // on
+		dict_write_tuplet(iter, &value1);
+	} else if(lights_on == 1 && farenheit_on == 0) {
+		Tuplet value2= TupletCString(key, "2"); // on
+		dict_write_tuplet(iter, &value2);
+	} else if(lights_on == 0 && farenheit_on == 1) {
+		Tuplet value3= TupletCString(key, "3"); // on
+		dict_write_tuplet(iter, &value3);
+	} else if(lights_on == 0 && farenheit_on == 0) {
+		printf("IN 0 0\n");
+    Tuplet value4= TupletCString(key, "4"); // on
+		dict_write_tuplet(iter, &value4);
+	}
+
+  //COMMENTED FOR TESTING ONLY
+  app_message_outbox_send();  
+  last_send_time = time(NULL);
+  app_timer_register(DATA_TIMEOUT_IN_S * 1000, timer_callback_data_timeout, NULL);
+  printf("DEBUG END timer_callback lights_on:%d farenheit_on:%d", lights_on, farenheit_on);
 }
 
 
@@ -238,11 +256,13 @@ static void game_window_unload(Window *window) {
 
 ///////STATS FUNCS////////////////
 void remove_stats_window(){
+  lights_on = 0;
   window_stack_pop(true);  
 }
 
 
 char stats_text[100]; //put outside function so it is global
+
 /* This is called when the select button is clicked */
 void select_click_handler(ClickRecognizerRef recognizer, void *context){
   snprintf(stats_text, 100, "Current Temp: %d \nMax: %d\nMin: %d \nAvg: %d", temp_curr, temp_max, temp_min, temp_avg);
@@ -251,9 +271,19 @@ void select_click_handler(ClickRecognizerRef recognizer, void *context){
   app_timer_register(STATS_WAIT_MS, remove_stats_window, NULL);
 }
 
+/* This is called when the select button is clicked */
+void window_multi_click_handler(ClickRecognizerRef recognizer, void *context){
+  snprintf(stats_text, 100, "On partymode...standby.");
+  text_layer_set_text(stats_layer, stats_text);
+  window_stack_push(s_stats_window, true);
+  lights_on = 1;
+  app_timer_register(STATS_WAIT_MS, remove_stats_window, NULL);
+}
+
 void config_provider(void *context) {
     //subscribe button to button click handler
     window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+    window_multi_click_handler(BUTTON_ID_DOWN, 2,4,0, true,down_multi_click_handler);
 }
 
 

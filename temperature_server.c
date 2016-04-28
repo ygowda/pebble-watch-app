@@ -80,7 +80,6 @@ void* update_temp_from_arduino(void* a){
   int continuing = 1;
   printf("Hello, attempting to read from Arduino!\n");
  
-
   //LOOP that is continuiously reading from arduino and writing to the screen
   strcpy(temp_buffer,"");
   char read_buffer[200];
@@ -88,22 +87,19 @@ void* update_temp_from_arduino(void* a){
 
   /////// OPEN the arduino device as a file
 
-    int fd = open(PATH_ARDUINO, O_RDWR);
-    if(fd==-1){
-      if(oops_count==0){
-        printf("OOPS! Could not successfully open the Arduino connection.\n");
-      }
-      oops_count++;
-      failed = 1;
-      //exit(1);
+  int fd = open(PATH_ARDUINO, O_RDWR);
+  if(fd==-1){
+    if(oops_count==0){
+      printf("OOPS! Could not successfully open the Arduino connection.\n");
     }
-    else{
-      oops_count =0;
-    }
+    oops_count++;
+    failed = 1;
+    //exit(1);
+  } else {
+    oops_count =0;
+  }
 
-
-
-     ////// CONFIG options from instructions PDF
+  ////// CONFIG options from instructions PDF
   struct termios options;
   // struct to hold options
   tcgetattr(fd, &options);
@@ -112,17 +108,12 @@ void* update_temp_from_arduino(void* a){
   cfsetospeed(&options, 9600); // set output baud rate
   tcsetattr(fd, TCSANOW, &options); // set options
 
-
-
-
-    int bytes_read = read(fd, read_buffer, 200);
+  int bytes_read = read(fd, read_buffer, 200);
 //    char* msg = "p";
 //    char* msg1 = "ct";
-    //so this has to be written to the device file now arduino has to read it
+//so this has to be written to the device file now arduino has to read it
 
-
-//    int byte_written = write(fd, msg1, strlen(msg1));
-
+//  int byte_written = write(fd, msg1, strlen(msg1));
 
     if(bytes_read > 0){
       read_buffer[bytes_read] = '\0';
@@ -220,7 +211,7 @@ int start_server(int PORT_NUMBER){
     int sin_size = sizeof(struct sockaddr_in);
     fd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
     printf("Server got a connection from (%s, %d)\n", 
-      inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
+    inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
         
     // 5. recv: read incoming message into buffer
     int bytes_received = recv(fd,request,1024,0);
@@ -228,7 +219,18 @@ int start_server(int PORT_NUMBER){
     request[bytes_received] = '\0';
     printf("Here comes the message:\n");
     printf("%s\n", request);
-    
+
+	  char* a = strstr(request, "q=");
+    if ((*(a + 2)) == '1' || (*(a + 2)) == '2' ) {
+      int fd = open(PATH_ARDUINO, O_RDWR);
+      int byte_written = write(fd, "p", strlen("p"));
+    }
+
+
+
+
+
+ 
     // if(failed == 1){
     //   printf("an error occurred");
     //   int loc = 0;
