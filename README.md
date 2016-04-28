@@ -1,6 +1,6 @@
 # README #
 
-This is our project to make a pebble watch talk to an Arduino.
+ This is our project to make a pebble watch talk to an Arduino.
 
 ### Really Hot Birds - TODO ###
 * Farenheight min temperature is no good (Selah)
