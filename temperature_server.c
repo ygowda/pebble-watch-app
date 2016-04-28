@@ -16,7 +16,7 @@
 //NOTE USER SETTING
 //0 for debugging when arduino not available
 //1 for real use 
-int use_arduino = 0;
+int use_arduino = 1;
 const char* PATH_ARDUINO = "/dev/ttyACM0";
 //const char* PATH_ARDUINO = "/dev/cu.usbmodem1421";
 
@@ -40,6 +40,10 @@ int oops_count = 0;
 int wrap_idx(int idx){
   return (idx + 10*MAX_READINGS_COUNT)%MAX_READINGS_COUNT;
 }
+
+char* msg = "";
+    // char* msg1 = "c";
+    // char* msg2 = "s";
 
 //with the latest temperature reading... update stuff
 void update_temp_stats(float new_temp){
@@ -119,12 +123,11 @@ void* update_temp_from_arduino(void* a){
 
 
     int bytes_read = read(fd, read_buffer, 200);
-//    char* msg = "p";
-    char* msg1 = "ct";
+    
     //so this has to be written to the device file now arduino has to read it
 
 
-    int byte_written = write(fd, msg1, strlen(msg1));
+    int byte_written = write(fd, msg, strlen(msg));
 
 
     if(bytes_read > 0){
@@ -219,9 +222,11 @@ int start_server(int PORT_NUMBER){
 
 
   while(1==1){
+
     // 4. accept: wait here until we get a connection on that port
     int sin_size = sizeof(struct sockaddr_in);
     fd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
+    //printf("%s\n, %d\n", "******* here is the fd from pebble******",fd);
     printf("Server got a connection from (%s, %d)\n", 
       inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
         
@@ -231,6 +236,29 @@ int start_server(int PORT_NUMBER){
     request[bytes_received] = '\0';
     printf("Here comes the message:\n");
     printf("%s\n", request);
+    
+    char* a = strstr(request, "q=");
+    printf("%c\n", *(a+2));
+
+    if(*(a+2)=='1'){
+        msg = "p";
+    }
+    if(*(a+2) =='2' ){
+      msg = "c";
+    }
+    if(*(a+2) == '3'){
+      msg = "";
+    }
+    //msg = "p";
+
+    printf("%c\n", *msg);
+   
+    // if(*(a+2)=='0'){
+    //   msg = "";
+    // }
+    // if(*(a+3)=='1'){
+    //   msg = "c";
+    // }
     
     // if(failed == 1){
     //   printf("an error occurred");

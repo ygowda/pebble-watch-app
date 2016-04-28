@@ -11,7 +11,7 @@ const time_t DATA_TIMEOUT_IN_S = 2;
 time_t last_send_time;
 
 static TextLayer *hello_layer, *stats_layer;
-static char msg[100];
+static char msg[100], msg2[100];
 static int temp_curr_mult, temp_curr, temp_max, temp_min, temp_avg;
 
 static Window *s_game_window, *s_stats_window;
@@ -21,7 +21,8 @@ static Player thePlayer;
 static int last_ten_y[10] = {56,59,62,65,68,71,74,77,80,83};
 static GRect window_frame;
 static int TEMP_MULTIPLIER = 100;
-
+static int lights_on = 0;
+static int farenheit_on = 0;
 
 // PLAYER FUNCTIONS
 
@@ -200,7 +201,41 @@ void in_received_handler(DictionaryIterator *received, void *context){
 void in_dropped_handler(AppMessageResult reason, void *context) {
     // incoming message dropped
     text_layer_set_text(hello_layer, "Error in!");
-    printf("in_dropped_handler\n");
+}
+
+static void timer_callback(void *data) {
+
+  Player *player = &thePlayer;
+  player_update(player); 
+  
+  layer_mark_dirty(s_player_layer);
+  
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+  int key = 0;
+
+  // send the message "hello?" to the phone, using key #0
+  if(lights_on == 1) {
+    Tuplet value1= TupletCString(key, "1"); // on
+    dict_write_tuplet(iter, &value1);
+  } 
+  if(farenheit_on==1){
+    Tuplet value2= TupletCString(key, "2"); // on
+    dict_write_tuplet(iter, &value2);
+}
+  
+  
+//   else if (lights_on == 0){    
+//     Tuplet value2 = TupletCString(key, "2"); // F
+//     dict_write_tuplet(iter, &value2);
+//   }
+  
+
+  //COMMENTED FOR TESTING ONLY
+  //after the required message is put on the dictionary you can send 
+  app_message_outbox_send();  
+
+  app_timer_register(FRAME_PAUSE_IN_MS, timer_callback, NULL);
 }
 
 
@@ -245,15 +280,54 @@ void remove_stats_window(){
 char stats_text[100]; //put outside function so it is global
 /* This is called when the select button is clicked */
 void select_click_handler(ClickRecognizerRef recognizer, void *context){
+  //where is temp_curr getting information from??
   snprintf(stats_text, 100, "Current Temp: %d \nMax: %d\nMin: %d \nAvg: %d", temp_curr, temp_max, temp_min, temp_avg);
   text_layer_set_text(stats_layer, stats_text);
   window_stack_push(s_stats_window, true);
-  app_timer_register(STATS_WAIT_MS, remove_stats_window, NULL);
+//  app_timer_register(STATS_WAIT_MS, remove_stats_window, NULL);
 }
 
+
+
+void select_long_click_handler(ClickRecognizerRef recognizer, void *context){
+  //where is temp_curr getting information from??
+  snprintf(stats_text, 100, "you long clicked");
+  text_layer_set_text(stats_layer, stats_text);
+  window_stack_push(s_stats_window, true);
+  //app_timer_register(STATS_WAIT_MS, remove_stats_window, NULL);
+  
+  lights_on = 1;
+  farenheit_on =0;
+}
+
+void multi_select_click_handler(ClickRecognizerRef recognizer, void *context){
+//  if (farenheit_on ==1){
+  snprintf(stats_text, 100, "you pushed up");
+  text_layer_set_text(stats_layer, stats_text);
+  window_stack_push(s_stats_window, true);
+    farenheit_on =1;
+    lights_on =0;
+//     }
+//   else{
+//     farenheit_on =1;
+//}
+  
+}
+
+
+void select_long_click_release_handler(ClickRecognizerRef recognizer, void *context){
+  lights_on = 0;
+  remove_stats_window();
+}
+
+
 void config_provider(void *context) {
-    //subscribe button to button click handler
+    //subscribe button to button click handler  
+    //all 3 buttons are subscribed
     window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+    window_long_click_subscribe(BUTTON_ID_SELECT, 0, select_long_click_handler, select_long_click_release_handler);
+    window_multi_click_subscribe(BUTTON_ID_UP, 2, 3, 300, true, multi_select_click_handler);
+  
 }
 
 
@@ -291,6 +365,7 @@ static void init(void) {
   stats_layer = text_layer_create(GRect(0, 0, 144, 80));
   layer_add_child(window_get_root_layer(s_stats_window), text_layer_get_layer(stats_layer));
   window_set_click_config_provider(s_game_window, config_provider);
+
 }
 
 static void deinit(void) {
