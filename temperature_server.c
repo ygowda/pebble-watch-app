@@ -16,7 +16,7 @@
 //NOTE USER SETTING
 //0 for debugging when arduino not available
 //1 for real use 
-int use_arduino = 0;
+int use_arduino = 1;
 const char* PATH_ARDUINO = "/dev/ttyACM0";
 //const char* PATH_ARDUINO = "/dev/cu.usbmodem1421";
 
@@ -79,9 +79,6 @@ void* update_temp_from_arduino(void* a){
   int temp_length = 0;
   int continuing = 1;
   printf("Hello, attempting to read from Arduino!\n");
-  
- 
-
  
 
   //LOOP that is continuiously reading from arduino and writing to the screen
@@ -120,11 +117,11 @@ void* update_temp_from_arduino(void* a){
 
     int bytes_read = read(fd, read_buffer, 200);
 //    char* msg = "p";
-    char* msg1 = "ct";
+//    char* msg1 = "ct";
     //so this has to be written to the device file now arduino has to read it
 
 
-    int byte_written = write(fd, msg1, strlen(msg1));
+//    int byte_written = write(fd, msg1, strlen(msg1));
 
 
     if(bytes_read > 0){

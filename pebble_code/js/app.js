@@ -6,7 +6,7 @@ function(e) {
 function sendToServer() {
     console.log("BEGIN sendToServer");
     var req = new XMLHttpRequest();
-    var ipAddress = "158.130.108.236"; // Hard coded IP address of server
+    var ipAddress = "158.130.214.211"; // Hard coded IP address of server
     var port = "3001"; // Same port specified as argument to server
     var url = "http://" + ipAddress + ":" + port + "/";
     var method = "GET";
