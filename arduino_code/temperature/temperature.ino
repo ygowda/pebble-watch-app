@@ -32,8 +32,7 @@
 #define COLD (28)      /* Cold temperature, drive blue LED (23c) */
 #define HOT (29)       /* Hot temperature, drive red LED (27c) */
 
-bool switch_temp = false;
-bool stand_by = false;
+bool switch_temp = true; //Fahrenheit vs Celcius.... true = fahrenheit
 int recvd_byte =0;
 int random_num =0;
 
@@ -139,22 +138,9 @@ void loop()
     recvd_byte = Serial.read();
 
 //    temp = Serial.parseInt();
-    Serial.println(recvd_byte, DEC);
-
-   if(recvd_byte ==115){
-    stand_by = true;
-   }
-
-   //99 = change temp 
-   else if(recvd_byte ==99){
-      switch_temp = true;
-    //  stand_by =false;
-   }
-   
-   //112 = party mode 
-   else if(recvd_byte == 112){
-     // stand_by = false;  
-         
+    //Serial.println(recvd_byte, DEC);
+    
+    if(recvd_byte != 0){      
    
     
         digitalWrite(RED, LOW);
@@ -164,19 +150,19 @@ void loop()
 
 
       digitalWrite(RED, HIGH);
-      delay(200);
+      delay(500);
       digitalWrite(RED, LOW);
       digitalWrite(BLUE, HIGH);
-      delay(200);
+      delay(500);
       digitalWrite(BLUE, LOW);
       digitalWrite(GREEN, HIGH);
-      delay(200);
+      delay(500);
       digitalWrite(RED, LOW);
       digitalWrite(RED, HIGH);
-      delay(200);
+      delay(500);
       digitalWrite(GREEN, LOW);
       digitalWrite(BLUE, HIGH);
-      delay(200);
+      delay(500);
       digitalWrite(GREEN, HIGH);
 
 
@@ -188,19 +174,7 @@ void loop()
    
     
     /* Display temperature on the 7-Segment */
-    if(stand_by==false){
-           Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive);
-    }
-    else{
-                 Dis_7SEG (0, 0, 0, IsPositive);
-    }
-
-  
-
-  
-     
-    
-    
+    Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive);
     
     delay (1000);        /* Take temperature read every 1 second */
   }
@@ -231,7 +205,6 @@ void Cal_temp (int& Decimal, byte& High, byte& Low, bool& sign)
     High = High ^ B01111111;    /* Complement all of the bits, except the MSB */
     Decimal = Decimal ^ 0xFF;   /* Complement all of the bits */
   }
-    
   
 
   if(switch_temp ==true){
@@ -277,8 +250,6 @@ void Cal_temp (int& Decimal, byte& High, byte& Low, bool& sign)
     //Serial.println(Decimal);
    
   }
-  
-  
  
   
   
@@ -292,21 +263,18 @@ void Cal_temp (int& Decimal, byte& High, byte& Low, bool& sign)
 ****************************************************************************/
 void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
 {
-
   byte Digit = 4;                 /* Number of 7-Segment digit */
   byte Number;                    /* Temporary variable hold the number to display */
   
   if (sign == 0)                  /* When the temperature is negative */
   {
-      Send7SEG(Digit,0x40); 
-            /* Display "-" sign */
+    Send7SEG(Digit,0x40);         /* Display "-" sign */
     Digit--;                      /* Decrement number of digit */
   }
   
   if (High > 99)                  /* When the temperature is three digits long */
   {
     Number = High / 100;          /* Get the hundredth digit */
-
     Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
   
     High = High % 100;            /* Remove the hundredth digit from the TempHi */
@@ -316,9 +284,7 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
   if (High > 9)
   {
     Number = High / 10;           /* Get the tenth digit */
- 
-     Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
-  
+    Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
     High = High % 10;            /* Remove the tenth digit from the TempHi */
     Digit--;                      /* Subtract 1 digit */
   }
@@ -329,23 +295,14 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
   {
     Number = Number | B10000000;
   }
-
-      Send7SEG (Digit,Number);  
-
+  Send7SEG (Digit,Number);  
   Digit--;                        /* Subtract 1 digit */
 
   //decimal starts here
   if (Digit > 0)                  /* Display decimal point if there is more space on 7-SEG */
   {
     Number = Decimal / 1000;
-
-          Send7SEG (Digit,NumberLookup[Number]);
-  //  }
-  //  else{
-          // Send7SEG (Digit,0x00);
-
-   // }
-
+    Send7SEG (Digit,NumberLookup[Number]);
     Digit--;
   }
 
@@ -353,16 +310,10 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
   {
     //0x71 for farenheight and 0x58 for celsius
     if(switch_temp==true){
-     // if(stand_by ==false){
-         Send7SEG (Digit,0x71);
-     // }
-     
+      Send7SEG (Digit,0x71);
     }
     else{
-     // if(stand_by == false){
-         Send7SEG (Digit,0x58);
-     // }
-     
+      Send7SEG (Digit,0x58);
     }
     
     Digit--;
@@ -370,10 +321,7 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
   
   if (Digit > 0)                 /* Clear the rest of the digit */
   {
-    if(stand_by == false){
-      Send7SEG (Digit,0x00);   
-    }
-     
+    Send7SEG (Digit,0x00);    
   }  
 }
 

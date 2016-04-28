@@ -2,13 +2,16 @@
 #include <time.h>
 #include "player.h"
 #include <stdlib.h>
+#include <time.h>
 
 #define FRAME_PAUSE_IN_MS 750
 #define STATS_WAIT_MS 1500
 
+const time_t DATA_TIMEOUT_IN_S = 2;
+time_t last_send_time;
 
 static TextLayer *hello_layer, *stats_layer;
-static char msg[100], msg2[100];
+static char msg[100];
 static int temp_curr_mult, temp_curr, temp_max, temp_min, temp_avg;
 
 static Window *s_game_window, *s_stats_window;
@@ -32,21 +35,22 @@ static void player_init(Player *player) {
 }
 
 static int convert_temp_to_pixel(int temp, int min_temp, int max_temp, int min_pix, int max_pix){
-  int pos_norm_100 = ((temp - min_temp)*100)/(max_temp-min_temp); // should be from 0-100
-  printf("temp %d pos_norm_100 %d\n", temp, pos_norm_100);
-  int pix_y = max_pix - (pos_norm_100*(max_pix - min_pix)/100);
+  printf("BEGIN convert_temp_to_pixel %d\n", temp);
+  int pos_norm_100 = ((temp - min_temp)*TEMP_MULTIPLIER)/(max_temp-min_temp); // should be from 0-100
+  int pix_y = max_pix - (pos_norm_100*(max_pix - min_pix)/TEMP_MULTIPLIER);
   //printf("pos_norm_100 %d pix_y %d\n", (int)pos_norm_100, pix_y);
   if(pix_y < min_pix) pix_y = min_pix;
   if(pix_y > max_pix) pix_y = max_pix;
   return pix_y;
-  //return max_pix;
 }
 
 static void player_update(Player *player) {  
 
   // update Player position
-  player->pos.y = convert_temp_to_pixel(temp_curr_mult, 20*TEMP_MULTIPLIER, 40*TEMP_MULTIPLIER, 25, 150);
-  
+  int max_display_temp = temp_avg + 10;
+  int min_display_temp = temp_avg - 10;
+
+  player->pos.y = convert_temp_to_pixel(temp_curr_mult, min_display_temp*TEMP_MULTIPLIER, max_display_temp*TEMP_MULTIPLIER, 25, 150);
   
   // UPDATE PATH
   last_ten_y[0] = last_ten_y[1];
@@ -95,76 +99,18 @@ static void wall_layer_update_callback(Layer *me, GContext *ctx) {
 
 // TEMP FUNCTIONS
 
-void out_sent_handler(DictionaryIterator *sent, void *context) {
-    // outgoing message was delivered -- do nothing
-    //int x = 1;
-}
+static void timer_callback(void *data); //just declairing it
 
-void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
-    // outgoing message failed
-    text_layer_set_text(hello_layer, "Error out!");
-}
-
-void in_received_handler(DictionaryIterator *received, void *context){
-    // looks for key #0 in the incoming message
-    Tuple *text_tuple;
-
-    text_tuple = dict_find(received, 0);
-    if (text_tuple) {
-        if (text_tuple->value) {
-            strcpy(msg, text_tuple->value->cstring); //update message
-            temp_curr_mult = atoi(msg);
-            temp_curr = atoi(msg)/TEMP_MULTIPLIER;
-        }
-        else strcpy(msg, "no value!");      
-    }
-    else {
-        text_layer_set_text(hello_layer, "no message!");
-    }
-
-    text_tuple = dict_find(received, 1);
-    if (text_tuple) {
-        if (text_tuple->value) {
-            strcpy(msg2, text_tuple->value->cstring); //update message
-            printf("Setting temp_max\n");
-            temp_max = atoi(msg2)/TEMP_MULTIPLIER;
-        }
-        else strcpy(msg2, "no value!");      
-    }
-    text_tuple = dict_find(received, 2);
-    if (text_tuple) {
-        printf("Setting temp_min\n");
-        if (text_tuple->value) {
-            strcpy(msg2, text_tuple->value->cstring); //update message
-            printf("Setting temp_min\n");
-            temp_min = atoi(msg2)/TEMP_MULTIPLIER;
-        }
-        else strcpy(msg2, "no value!");      
-    }
-    text_tuple = dict_find(received, 3);
-    if (text_tuple) {
-        if (text_tuple->value) {
-            strcpy(msg2, text_tuple->value->cstring); //update message
-            printf("Setting temp_avg\n");
-            temp_avg = atoi(msg2)/TEMP_MULTIPLIER;
-        }
-        else strcpy(msg2, "no value!");      
-    }
-
-    else {
-        text_layer_set_text(hello_layer, "no message2!");
-    }
-
-    text_layer_set_text(hello_layer, msg);
-
-}
-
-void in_dropped_handler(AppMessageResult reason, void *context) {
-    // incoming message dropped
-    text_layer_set_text(hello_layer, "Error in!");
+static void timer_callback_data_timeout(void *data){
+  printf("DEBUG BEGIN timer_callback_data_timeout\n");
+  if(time(NULL) - last_send_time >= DATA_TIMEOUT_IN_S){
+    text_layer_set_text(hello_layer, "No Data!");
+    app_timer_register(FRAME_PAUSE_IN_MS, timer_callback, NULL);
+  }
 }
 
 static void timer_callback(void *data) {
+  printf("DEBUG BEGIN timer_callback\n");
 
   Player *player = &thePlayer;
   player_update(player); 
@@ -180,8 +126,81 @@ static void timer_callback(void *data) {
 
     //COMMENTED FOR TESTING ONLY
     app_message_outbox_send();  
-   
-   app_timer_register(FRAME_PAUSE_IN_MS, timer_callback, NULL);
+    last_send_time = time(NULL);
+    app_timer_register(DATA_TIMEOUT_IN_S * 1000, timer_callback_data_timeout, NULL);
+}
+
+
+void out_sent_handler(DictionaryIterator *sent, void *context) {
+    // outgoing message was delivered -- do nothing
+    //int x = 1;
+}
+
+void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
+    // outgoing message failed
+    text_layer_set_text(hello_layer, "Error out!");
+}
+
+void in_received_handler(DictionaryIterator *received, void *context){
+    // looks for key #0 in the incoming message
+    Tuple *text_tuple;
+
+    //default values if not successfully gotten
+    temp_curr_mult = -999;
+    temp_curr = -999;
+    temp_min = -999;
+    temp_max = -999;
+    temp_avg = -999;
+
+
+    //get current temperature from server reply
+    text_tuple = dict_find(received, 0);
+    if (text_tuple) {
+        if (text_tuple->value) {
+            temp_curr_mult = atoi(text_tuple->value->cstring);
+            temp_curr = atoi(text_tuple->value->cstring)/TEMP_MULTIPLIER;
+        }
+    }
+
+    text_tuple = dict_find(received, 1);
+    if (text_tuple) {
+        if (text_tuple->value) {
+            temp_max = atoi(text_tuple->value->cstring)/TEMP_MULTIPLIER;
+        }
+    }
+
+    text_tuple = dict_find(received, 2);
+    if (text_tuple) {
+        if (text_tuple->value) {
+            temp_min = atoi(text_tuple->value->cstring)/TEMP_MULTIPLIER;
+        }
+    }
+
+    text_tuple = dict_find(received, 3);
+    if (text_tuple) {
+        if (text_tuple->value) {
+            temp_avg = atoi(text_tuple->value->cstring)/TEMP_MULTIPLIER;
+        }
+    }
+
+    if(temp_curr != -999) {
+      snprintf(msg, 30, "Temp curr = %d", temp_curr);
+    }
+    else{
+      snprintf(msg, 30, "No data!");
+    }
+
+    text_layer_set_text(hello_layer, msg);
+
+    //BEGIN NEXT ITERATION
+    app_timer_register(FRAME_PAUSE_IN_MS, timer_callback, NULL);
+
+}
+
+void in_dropped_handler(AppMessageResult reason, void *context) {
+    // incoming message dropped
+    text_layer_set_text(hello_layer, "Error in!");
+    printf("in_dropped_handler\n");
 }
 
 
@@ -193,7 +212,7 @@ static void game_window_load(Window *window) {
   // 1. Create layer
   wall_layer = layer_create(frame);
   s_player_layer = layer_create(frame);
-  hello_layer = text_layer_create((GRect) { .origin = { 0, 72 }, .size = { frame.size.w, 20 } });
+  hello_layer = text_layer_create((GRect) { .origin = { 0, frame.size.h - 20}, .size = { frame.size.w, 20 } });
   
   text_layer_set_text_alignment(hello_layer, GTextAlignmentCenter);
   
@@ -207,8 +226,7 @@ static void game_window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(hello_layer));
   
   // 4. Init Values
-  player_init(&thePlayer);
-  
+  player_init(&thePlayer); 
 }
 
 static void game_window_unload(Window *window) {
@@ -273,7 +291,6 @@ static void init(void) {
   stats_layer = text_layer_create(GRect(0, 0, 144, 80));
   layer_add_child(window_get_root_layer(s_stats_window), text_layer_get_layer(stats_layer));
   window_set_click_config_provider(s_game_window, config_provider);
-
 }
 
 static void deinit(void) {

@@ -3,18 +3,17 @@
 This is our project to make a pebble watch talk to an Arduino.
 
 ### Really Hot Birds - TODO ###
-* Calibration, avg +-4 (Selah)
-* Menu Screen, merge with functionality (Dan)
 * Farenheight min temperature is no good (Selah)
-* Differentiate pebble->server requests, party mode triggered by select button (Selah)
-* Differentiate server->arduino requests(Farenheit or PartyMode) (YASHUS) (SELAH)
+* Differentiate pebble->server requests, party mode triggered by select button (YASHUS & DAN)
+* Differentiate server->arduino requests(Farenheit or PartyMode) (YASHUS)
 * Check if the server does not get connection from pebble code (ex: wrong ip address) then display error message next time (DAN)
 * Stand by mode. Arduino screen should not display reading and neither should watch but temp should still be tracked. (YASHUS), (DAN).
-*Limit stats to last hour (DAN)
-
 
 
 ##DONE##
+* Error handling for when server stops (Selah)
+* Limit stats to last hour (SELAH)
+* Calibration, avg +-4 (Selah)
 * Pebble screen showing min, max and average (Selah)
 * Combining animation and temperature data (SELAH & DAN)
 * Cause arduino to make fancy lights (YASHUS)
