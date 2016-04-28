@@ -121,9 +121,7 @@ void loop()
     Wire.requestFrom(THERM, 2);
     Temperature_H = Wire.read();
     Temperature_L = Wire.read();
-      String temp_string = "";
-
-
+    String temp_string = "";
 
     /* Calculate temperature */
     Cal_temp (Decimal, Temperature_H, Temperature_L, IsPositive);
@@ -133,45 +131,38 @@ void loop()
     SerialMonitorPrint (Temperature_H, Decimal, IsPositive);
 
     /* Update RGB LED.*/
-      if(Serial.available()>0){
- //   int temp;
-    recvd_byte = Serial.read();
+    if(Serial.available()>0){
+      /*   int temp; */
+      recvd_byte = Serial.read();
 
-//    temp = Serial.parseInt();
-    //Serial.println(recvd_byte, DEC);
+      /* temp = Serial.parseInt();*/
+      /*Serial.println(recvd_byte, DEC);*/
 
-    if(recvd_byte != 0){
-
+      if(recvd_byte != 0){
 
         digitalWrite(RED, LOW);
         digitalWrite(GREEN, LOW);
         digitalWrite(BLUE, LOW);
 
-
-
-      digitalWrite(RED, HIGH);
-      delay(500);
-      digitalWrite(RED, LOW);
-      digitalWrite(BLUE, HIGH);
-      delay(500);
-      digitalWrite(BLUE, LOW);
-      digitalWrite(GREEN, HIGH);
-      delay(500);
-      digitalWrite(RED, LOW);
-      digitalWrite(RED, HIGH);
-      delay(500);
-      digitalWrite(GREEN, LOW);
-      digitalWrite(BLUE, HIGH);
-      delay(500);
-      digitalWrite(GREEN, HIGH);
-
-
+        digitalWrite(RED, HIGH);
+        delay(100);
+        digitalWrite(RED, LOW);
+        digitalWrite(BLUE, HIGH);
+        delay(100);
+        digitalWrite(BLUE, LOW);
+        digitalWrite(GREEN, HIGH);
+        delay(100);
+        digitalWrite(RED, LOW);
+        digitalWrite(RED, HIGH);
+        delay(100);
+        digitalWrite(GREEN, LOW);
+        digitalWrite(BLUE, HIGH);
+        delay(100);
+        digitalWrite(GREEN, HIGH);
+      }
+    } else{
+      UpdateRGB (Temperature_H);
     }
-  }
-  else{
-     UpdateRGB (Temperature_H);
-  }
-
 
     /* Display temperature on the 7-Segment */
     Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive);
