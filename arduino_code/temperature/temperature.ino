@@ -139,7 +139,7 @@ void loop()
     
     /* Update RGB LED.*/
       if(Serial.available()>0){
-        
+ //   int temp;
     recvd_byte = Serial.read();
 
 //    temp = Serial.parseInt();
