@@ -16,58 +16,32 @@
 //NOTE USER SETTING
 //0 for debugging when arduino not available
 //1 for real use 
-int use_arduino = 0;
-const char* PATH_ARDUINO = "/dev/ttyACM0";
-//const char* PATH_ARDUINO = "/dev/cu.usbmodem1421";
+int use_arduino = 1;
 
 const int TEMP_MULTIPLIER = 100; //because we can't use floats on Pebble
 
-
-// The temperature stats state
-const int MAX_READINGS_COUNT = 3600; //assuming 1 read every second 
+// The temperature state
 float temp_curr = -999;
 float temp_min = 99999;
 float temp_max = -99999;
-float temp_avg = 0;
-int readings_count = 0; //how many temps are in the temp store
-int temp_store_idx = 0; //most recent location that temp was stored
-float temp_store[MAX_READINGS_COUNT];
-///////
-
+float temp_sum = 0;
+float readings_count = 0;
 int failed = 0;
 int oops_count = 0;
 
-int wrap_idx(int idx){
-  return (idx + 10*MAX_READINGS_COUNT)%MAX_READINGS_COUNT;
-}
+
+char* msg = "";
+    // char* msg1 = "c";
+    // char* msg2 = "s";
+
 
 //with the latest temperature reading... update stuff
-void update_temp_stats(float new_temp){
-  //UPDATE TEMP STORE
-  temp_store_idx = wrap_idx(temp_store_idx + 1);
-  if(readings_count < MAX_READINGS_COUNT) readings_count += 1;
-  temp_store[temp_store_idx] = new_temp;
-
-  //UPDATE CUMULATIVE STATS
-  temp_curr = temp_store[temp_store_idx];
-
-  float temp_sum = 0;
-  temp_min = 99999;
-  temp_max = -99999;
-
-  int this_idx;
-  float this_temp;
-  for(int i = 0; i< readings_count; i++){
-    this_idx = wrap_idx(temp_store_idx -i);
-    this_temp = temp_store[this_idx];
-    if(this_temp < temp_min) temp_min = this_temp;
-    if(this_temp > temp_max) temp_max = this_temp;
-    temp_sum += this_temp;
-  }
-
-  temp_avg = temp_sum/readings_count;
-
-  //printf("END update_temp_stats - new_temp:%f temp_min:%f temp_max:%f \n", new_temp, temp_min, temp_max);
+void update_temp_stats(float temp){
+  temp_curr = temp;
+  if(temp < temp_min) temp_min = temp;
+  if(temp > temp_max) temp_max = temp;
+  temp_sum += temp;
+  readings_count++;
 }
 
 //used by thread to read output from arduino, parse temperature, 
@@ -91,10 +65,10 @@ void* update_temp_from_arduino(void* a){
 
   /////// OPEN the arduino device as a file
 
-    int fd = open(PATH_ARDUINO, O_RDWR);
+    int fd = open("/dev/cu.usbmodem1421", O_RDWR);
     if(fd==-1){
       if(oops_count==0){
-        printf("OOPS! Could not successfully open the Arduino connection.\n");
+        printf("OOPS!\n");
       }
       oops_count++;
       failed = 1;
@@ -119,12 +93,11 @@ void* update_temp_from_arduino(void* a){
 
 
     int bytes_read = read(fd, read_buffer, 200);
-//    char* msg = "p";
-    char* msg1 = "ct";
+    
     //so this has to be written to the device file now arduino has to read it
 
 
-    int byte_written = write(fd, msg1, strlen(msg1));
+    int byte_written = write(fd, msg, strlen(msg));
 
 
     if(bytes_read > 0){
@@ -219,9 +192,11 @@ int start_server(int PORT_NUMBER){
 
 
   while(1==1){
+
     // 4. accept: wait here until we get a connection on that port
     int sin_size = sizeof(struct sockaddr_in);
     fd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
+    //printf("%s\n, %d\n", "******* here is the fd from pebble******",fd);
     printf("Server got a connection from (%s, %d)\n", 
       inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
         
@@ -231,6 +206,29 @@ int start_server(int PORT_NUMBER){
     request[bytes_received] = '\0';
     printf("Here comes the message:\n");
     printf("%s\n", request);
+    
+    char* a = strstr(request, "q=");
+    printf("%c\n", *(a+2));
+
+    if(*(a+2)=='1'){
+        msg = "p";
+    }
+    if(*(a+2) =='2' ){
+      msg = "c";
+    }
+    if(*(a+2) == '3'){
+      msg = "";
+    }
+    //msg = "p";
+
+    printf("%c\n", *msg);
+   
+    // if(*(a+2)=='0'){
+    //   msg = "";
+    // }
+    // if(*(a+3)=='1'){
+    //   msg = "c";
+    // }
     
     // if(failed == 1){
     //   printf("an error occurred");
@@ -249,7 +247,7 @@ int start_server(int PORT_NUMBER){
     loc += sprintf(reply + loc, "\"temp_curr_mult\": \"%s\",\n", "the arduino was disconnected" );
     loc += sprintf(reply + loc, "\"temp_max_mult\": \"%d\",\n", (int)(temp_max*TEMP_MULTIPLIER) );
     loc += sprintf(reply + loc, "\"temp_min_mult\": \"%d\",\n", (int)(temp_min*TEMP_MULTIPLIER) );
-    loc += sprintf(reply + loc, "\"temp_avg_mult\": \"%d\"\n", (int)(temp_avg*TEMP_MULTIPLIER) );
+    loc += sprintf(reply + loc, "\"temp_avg_mult\": \"%d\"\n", (int)(temp_sum*TEMP_MULTIPLIER/readings_count) );
     loc += sprintf(reply + loc, "}\n" );
     failed = 0;
 
@@ -262,7 +260,7 @@ int start_server(int PORT_NUMBER){
     loc += sprintf(reply + loc, "\"temp_curr_mult\": \"%d\",\n", (int)(temp_curr*TEMP_MULTIPLIER) );
     loc += sprintf(reply + loc, "\"temp_max_mult\": \"%d\",\n", (int)(temp_max*TEMP_MULTIPLIER) );
     loc += sprintf(reply + loc, "\"temp_min_mult\": \"%d\",\n", (int)(temp_min*TEMP_MULTIPLIER) );
-    loc += sprintf(reply + loc, "\"temp_avg_mult\": \"%d\"\n", (int)(temp_avg*TEMP_MULTIPLIER) );
+    loc += sprintf(reply + loc, "\"temp_avg_mult\": \"%d\"\n", (int)(temp_sum*TEMP_MULTIPLIER/readings_count) );
     loc += sprintf(reply + loc, "}\n" );
     }
     
